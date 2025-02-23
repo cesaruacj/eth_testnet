@@ -1,0 +1,3 @@
+[submodule "client/sushiv3/sushiswap"]
+	path = client/sushiv3/sushiswap
+	url = https://github.com/sushiswap/v3-periphery.git
