@@ -1,10 +1,10 @@
 // basels/client/aerodrome/GetPricesAerodrome.js
 
-const { ethers } = require("ethers");
-const { addressRouter, addressFactory, addressPriceOracle } = require("./AddressList");
-const { routerABI, factoryABI, oracleABI } = require("./AbiList");
+import { ethers } from "ethers";
+import { addressRouter, addressFactory, addressPriceOracle } from "./AddressList";
+import { routerABI, factoryABI, oracleABI } from "./AbiList";
 
-// Usa un proveedor para conectarte a Base Chain; asegúrate de reemplazar YOUR_API_KEY por tu clave.
+// Usa un proveedor para conectarte a Base Chain
 const provider = new ethers.providers.JsonRpcProvider("https://base-mainnet.g.alchemy.com/v2/WtCCG_ntdXg_-l_oeA8VzgPxfvBbJC7F");
 
 // Instancia del contrato Factory para obtener pools
