@@ -9,46 +9,40 @@ const {
 
 const { erc20ABI, factoryABI, pairABI, routerABI } = require("./AbiList");
 
-// Standard Provider
+// Actualización: Se cambia el proveedor para conectar con BaseChain en lugar de Ethereum mainnet.
 const provider = new ethers.providers.JsonRpcProvider(
-  "https://eth-mainnet.g.alchemy.com/v2/8iXQDvb1A-2xCFyaHw-Jzij6Y_UKXc_s"
+  "https://base-mainnet.g.alchemy.com/v2/WtCCG_ntdXg_-l_oeA8VzgPxfvBbJC7F"
 );
 
-// Connect to Factory
+// Conectar al Factory de Uniswap V2 en Base
 const contractFactory = new ethers.Contract(
   addressFactory,
   factoryABI,
   provider
 );
 
-// Connect to Router
+// Conectar al Router de Uniswap V2 en Base
 const contractRouter = new ethers.Contract(addressRouter, routerABI, provider);
 
-// Call the Blockchain
+// Función para consultar precios utilizando getAmountsOut del Router V2.
 const getPrices = async (amountInHuman) => {
-  // Convert the amount in
+  // Convertir el monto de entrada usando los decimales del token "from"
   const contractToken = new ethers.Contract(addressFrom, erc20ABI, provider);
   const decimals = await contractToken.decimals();
   const amountIn = ethers.utils.parseUnits(amountInHuman, decimals).toString();
 
-  // Get amounts out
+  // Obtener los montos de salida para la ruta [addressFrom, addressTo]
   const amountsOut = await contractRouter.getAmountsOut(amountIn, [
     addressFrom,
     addressTo,
   ]);
 
-  // Convert amount out - decimals
+  // Convertir la salida a formato legible utilizando los decimales del token "to"
   const contractToken2 = new ethers.Contract(addressTo, erc20ABI, provider);
   const decimals2 = await contractToken2.decimals();
+  const amountOutHuman = ethers.utils.formatUnits(amountsOut[1].toString(), decimals2);
 
-  // Convert amount out - human readable
-  const amountOutHuman = ethers.utils.formatUnits(
-    amountsOut[1].toString(),
-    decimals2
-  );
-
-  // Log output
-  console.log(amountOutHuman);
+  console.log("Precio de salida:", amountOutHuman);
 };
 
 const amountInHuman = "1";

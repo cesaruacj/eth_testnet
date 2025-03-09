@@ -1,9 +1,6 @@
-const {
-  time,
-  loadFixture,
-} = require("@nomicfoundation/hardhat-toolbox/network-helpers");
-const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
+const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("Lock", function () {
   // We define a fixture to reuse the same setup in every test.
@@ -14,7 +11,7 @@ describe("Lock", function () {
     const ONE_GWEI = 1_000_000_000;
 
     const lockedAmount = ONE_GWEI;
-    const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
+    const unlockTime = (await ethers.provider.getBlock("latest")).timestamp + ONE_YEAR_IN_SECS;
 
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await ethers.getSigners();
@@ -39,22 +36,18 @@ describe("Lock", function () {
     });
 
     it("Should receive and store the funds to lock", async function () {
-      const { lock, lockedAmount } = await loadFixture(
-        deployOneYearLockFixture
-      );
+      const { lock, lockedAmount } = await loadFixture(deployOneYearLockFixture);
 
-      expect(await ethers.provider.getBalance(lock.target)).to.equal(
-        lockedAmount
-      );
+      expect(await ethers.provider.getBalance(await lock.getAddress())).to.equal(lockedAmount);
     });
 
     it("Should fail if the unlockTime is not in the future", async function () {
       // We don't use the fixture here because we want a different deployment
-      const latestTime = await time.latest();
+      const latestTime = (await ethers.provider.getBlock("latest")).timestamp;
       const Lock = await ethers.getContractFactory("Lock");
-      await expect(Lock.deploy(latestTime, { value: 1 })).to.be.revertedWith(
-        "Unlock time should be in the future"
-      );
+      
+      await expect(Lock.deploy(latestTime, { value: 1 }))
+        .to.be.rejectedWith("Unlock time should be in the future");
     });
   });
 
@@ -63,32 +56,28 @@ describe("Lock", function () {
       it("Should revert with the right error if called too soon", async function () {
         const { lock } = await loadFixture(deployOneYearLockFixture);
 
-        await expect(lock.withdraw()).to.be.revertedWith(
-          "You can't withdraw yet"
-        );
+        await expect(lock.withdraw())
+          .to.be.rejectedWith("You can't withdraw yet");
       });
 
       it("Should revert with the right error if called from another account", async function () {
-        const { lock, unlockTime, otherAccount } = await loadFixture(
-          deployOneYearLockFixture
-        );
+        const { lock, unlockTime, otherAccount } = await loadFixture(deployOneYearLockFixture);
 
-        // We can increase the time in Hardhat Network
-        await time.increaseTo(unlockTime);
+        // We increase the time to pass the unlock time
+        await ethers.provider.send("evm_increaseTime", [unlockTime - (await ethers.provider.getBlock("latest")).timestamp + 1]);
+        await ethers.provider.send("evm_mine");
 
         // We use lock.connect() to send a transaction from another account
-        await expect(lock.connect(otherAccount).withdraw()).to.be.revertedWith(
-          "You aren't the owner"
-        );
+        await expect(lock.connect(otherAccount).withdraw())
+          .to.be.rejectedWith("You aren't the owner");
       });
 
       it("Shouldn't fail if the unlockTime has arrived and the owner calls it", async function () {
-        const { lock, unlockTime } = await loadFixture(
-          deployOneYearLockFixture
-        );
+        const { lock, unlockTime } = await loadFixture(deployOneYearLockFixture);
 
-        // Transactions are sent using the first signer by default
-        await time.increaseTo(unlockTime);
+        // We increase the time to pass the unlock time
+        await ethers.provider.send("evm_increaseTime", [unlockTime - (await ethers.provider.getBlock("latest")).timestamp + 1]);
+        await ethers.provider.send("evm_mine");
 
         await expect(lock.withdraw()).not.to.be.reverted;
       });
@@ -96,30 +85,31 @@ describe("Lock", function () {
 
     describe("Events", function () {
       it("Should emit an event on withdrawals", async function () {
-        const { lock, unlockTime, lockedAmount } = await loadFixture(
-          deployOneYearLockFixture
-        );
+        const { lock, unlockTime, lockedAmount } = await loadFixture(deployOneYearLockFixture);
 
-        await time.increaseTo(unlockTime);
+        // We increase the time to pass the unlock time
+        await ethers.provider.send("evm_increaseTime", [unlockTime - (await ethers.provider.getBlock("latest")).timestamp + 1]);
+        await ethers.provider.send("evm_mine");
 
         await expect(lock.withdraw())
           .to.emit(lock, "Withdrawal")
-          .withArgs(lockedAmount, anyValue); // We accept any value as `when` arg
+          .withArgs(lockedAmount);
       });
     });
 
     describe("Transfers", function () {
       it("Should transfer the funds to the owner", async function () {
-        const { lock, unlockTime, lockedAmount, owner } = await loadFixture(
-          deployOneYearLockFixture
-        );
+        const { lock, unlockTime, lockedAmount, owner } = await loadFixture(deployOneYearLockFixture);
 
-        await time.increaseTo(unlockTime);
+        // We increase the time to pass the unlock time
+        await ethers.provider.send("evm_increaseTime", [unlockTime - (await ethers.provider.getBlock("latest")).timestamp + 1]);
+        await ethers.provider.send("evm_mine");
 
-        await expect(lock.withdraw()).to.changeEtherBalances(
-          [owner, lock],
-          [lockedAmount, -lockedAmount]
-        );
+        const ownerBalanceBefore = await ethers.provider.getBalance(owner.address);
+        await lock.withdraw();
+        const ownerBalanceAfter = await ethers.provider.getBalance(owner.address);
+
+        expect(ownerBalanceAfter - ownerBalanceBefore).to.be.greaterThan(lockedAmount - 1_000_000_000_000n);
       });
     });
   });

@@ -33,33 +33,42 @@ module.exports = {
   },
   sushiv3: {
     router: {
-      address: '0x...SushiV3RouterAddress...',
+      address: '0xf2614A233c7C3e7f08b1F887Ba133a13f1eb2c55',
       abi: loadABI('sushiv3', 'router.json')
-    }
-    // Agrega más si fuera necesario
+    },
+    factory: {
+      address: '0x80C7DD17B01855a6D2347444a0FCC36136a314de',
+      abi: loadABI('sushiv3', 'factory.json')
+    },
   },
   swapbased: {
     router: {
-      address: '0x...SwapBasedRouterAddress...',
+      address: '0xaaa3b1F1bd7BCc97fD1917c18ADE665C5D31F066',
       abi: loadABI('swapbased', 'router.json')
+    },
+    factory: {
+      address: '0x04C9f118d21e8B767D2e50C946f0cC9F6C367300',
+      abi: loadABI('swapbased', 'factory.json')
     }
   },
   uniswapv2: {
     router: {
-      address: '0x...UniswapV2RouterAddress...',
+      address: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
       abi: loadABI('uniswapv2', 'router.json')
     },
     factory: {
-      address: '0x...UniswapV2FactoryAddress...',
+      address: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
       abi: loadABI('uniswapv2', 'factory.json')
     }
   },
   uniswapv3: {
     router: {
-      address: '0x...UniswapV3RouterAddress...',
+      address: '0x2626664c2603336E57B271c5C0b26F421741e481',
       abi: loadABI('uniswapv3', 'router.json')
-    }
-    // Puedes agregar factory u otras direcciones si fuera necesario
+    },
+    factory: {
+      address: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
+      abi: loadABI('uniswapv3', 'factory.json')
   },
   aave: {
     poolAddressesProvider: {
@@ -71,4 +80,4 @@ module.exports = {
       abi: loadABI('aave', 'pool.json')
     }
   }
-};
+}
