@@ -1,3 +1,18 @@
 [submodule "client/sushiv3/sushiswap"]
 	path = client/sushiv3/sushiswap
 	url = https://github.com/sushiswap/v3-periphery.git
+[submodule "aerodrome"]
+	path = aerodrome
+	url = https://github.com/aerodrome-finance/contracts.git
+[submodule "dexes/contracts"]
+	path = dexes/contracts
+	url = https://github.com/aerodrome-finance/contracts.git
+[submodule "external/aerodrome"]
+	path = external/aerodrome
+	url = https://github.com/aerodrome-finance/contracts.git
+[submodule "external/uniswap-v2-core"]
+	path = external/uniswap-v2-core
+	url = https://github.com/Uniswap/v2-core.git
+[submodule "external/uniswap-v2-peripherym"]
+	path = external/uniswap-v2-peripherym
+	url = https://github.com/Uniswap/v2-periphery.git

@@ -1,5 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+// Add this line to define anyValue
+const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("Lock", function () {
@@ -8,8 +10,9 @@ describe("Lock", function () {
   // and reset Hardhat Network to that snapshot in every test.
   async function deployOneYearLockFixture() {
     const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-    const ONE_GWEI = 1_000_000_000;
+    const ONE_GWEI = 1_000_000_000n; // Use BigInt
 
+    // Define variables properly
     const lockedAmount = ONE_GWEI;
     const unlockTime = (await ethers.provider.getBlock("latest")).timestamp + ONE_YEAR_IN_SECS;
 
@@ -85,7 +88,7 @@ describe("Lock", function () {
 
     describe("Events", function () {
       it("Should emit an event on withdrawals", async function () {
-        const { lock, unlockTime, lockedAmount } = await loadFixture(deployOneYearLockFixture);
+        const { lock, unlockTime, lockedAmount, owner } = await loadFixture(deployOneYearLockFixture);
 
         // We increase the time to pass the unlock time
         await ethers.provider.send("evm_increaseTime", [unlockTime - (await ethers.provider.getBlock("latest")).timestamp + 1]);
@@ -93,7 +96,7 @@ describe("Lock", function () {
 
         await expect(lock.withdraw())
           .to.emit(lock, "Withdrawal")
-          .withArgs(lockedAmount);
+          .withArgs(owner.address, lockedAmount, anyValue); // Ensure the arguments match the event
       });
     });
 
@@ -106,10 +109,16 @@ describe("Lock", function () {
         await ethers.provider.send("evm_mine");
 
         const ownerBalanceBefore = await ethers.provider.getBalance(owner.address);
-        await lock.withdraw();
+        const tx = await lock.withdraw();
+        const receipt = await tx.wait();
+        
+        // Calculate gas used
+        const gasUsed = receipt.gasUsed * receipt.gasPrice;
+        
         const ownerBalanceAfter = await ethers.provider.getBalance(owner.address);
 
-        expect(ownerBalanceAfter - ownerBalanceBefore).to.be.greaterThan(lockedAmount - 1_000_000_000_000n);
+        // Owner should have received the locked amount minus gas costs
+        expect(ownerBalanceAfter).to.equal(ownerBalanceBefore + BigInt(lockedAmount) - gasUsed);
       });
     });
   });

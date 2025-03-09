@@ -5,7 +5,7 @@ contract Lock {
     uint public unlockTime;
     address payable public owner;
 
-    event Withdrawal(uint amount, uint when);
+    event Withdrawal(address indexed to, uint amount, uint when);
 
     constructor(uint _unlockTime) payable {
         require(
@@ -19,7 +19,7 @@ contract Lock {
     function withdraw() public {
         require(block.timestamp >= unlockTime, "You can't withdraw yet");
         require(msg.sender == owner, "You aren't the owner");
-        emit Withdrawal(address(this).balance, block.timestamp);
+        emit Withdrawal(msg.sender, address(this).balance, block.timestamp);
         owner.transfer(address(this).balance);
     }
 }
