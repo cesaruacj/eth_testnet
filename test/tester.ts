@@ -14,12 +14,12 @@ describe("Arbitrage Logic", function () {
     // Deploy DexAggregator
     const DexAggregatorFactory = await ethers.getContractFactory("DexAggregator");
     dexAggregator = await DexAggregatorFactory.deploy() as DexAggregator;
-    console.log("DexAggregator deployed to:", await dexAggregator.getAddress());
+    console.log("DexAggregator deployed to:", dexAggregator.address);
     
     // Deploy ArbitrageLogic passing the address of DexAggregator
     const ArbitrageLogicFactory = await ethers.getContractFactory("ArbitrageLogic");
-    arbitrageLogic = await ArbitrageLogicFactory.deploy(await dexAggregator.getAddress()) as ArbitrageLogic;
-    console.log("ArbitrageLogic deployed to:", await arbitrageLogic.getAddress());
+    arbitrageLogic = await ArbitrageLogicFactory.deploy(dexAggregator.address) as ArbitrageLogic;
+    console.log("ArbitrageLogic deployed to:", arbitrageLogic.address);
   });
 
   it("should set owner correctly in ArbitrageLogic", async function () {

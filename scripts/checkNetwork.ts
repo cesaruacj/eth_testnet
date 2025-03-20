@@ -8,7 +8,7 @@ async function main() {
   console.log("Conectado con la cuenta:", deployer.address);
 
   // Obtener y formatear el balance
-  const balance = await deployer.getBalance(); // Tipado automático gracias a ethers.js
+  const balance = await ethers.provider.getBalance(deployer.address);
   console.log("Balance de la cuenta:", ethers.utils.formatEther(balance), "ETH");
 }
 

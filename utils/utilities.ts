@@ -2,16 +2,14 @@ import { network, ethers } from "hardhat";
 import { Contract } from "ethers";
 
 const fundErc20 = async (contract: Contract, sender: string, recipient: string, amount: string): Promise<void> => {
-  // Usa ethers.parseUnits (compatible con ethers v6)
-  const FUND_AMOUNT = ethers.parseUnits(amount, 18);
+  // Cambiado a ethers.utils.parseUnits para ethers v5
+  const FUND_AMOUNT = ethers.utils.parseUnits(amount, 18);
   
   // Obtén el signer del "whale" o cuenta con fondos
   const whale = await ethers.getSigner(sender);
 
   // Conecta el contrato al signer
   const contractSigner = contract.connect(whale);
-  // Asegura que la transacción se complete antes de continuar
-  // Si TypeScript no reconoce "transfer", haz un cast a any o define correctamente la interfaz ERC20.
   await (contractSigner as any).transfer(recipient, FUND_AMOUNT);
   console.log(`Transferred ${amount} tokens from ${sender} to ${recipient}`);
 };
