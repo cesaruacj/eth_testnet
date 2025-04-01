@@ -7,7 +7,10 @@ async function main() {
 
   // Desplegar DexAggregator
   const DexAggregatorFactory = await ethers.getContractFactory("DexAggregator");
-  const dexAggregator = await DexAggregatorFactory.deploy();
+  const dexAggregator = await DexAggregatorFactory.deploy({
+    gasPrice: ethers.utils.parseUnits("10", "gwei"), // Mayor precio de gas
+    gasLimit: 3000000, // Mayor límite de gas
+  });
   await dexAggregator.deployed();
   console.log(`DexAggregator deployed to: ${dexAggregator.address}`);
 

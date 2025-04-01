@@ -3,7 +3,7 @@ import { BigNumber, Contract } from "ethers";
 import * as fs from 'fs';
 import * as path from 'path';
 
-console.log(`Ejecutando en red: Base Mainnet`);
+console.log(`Ejecutando en red: Base Mainnet (fork)`);
 
 // Importar ABIs de manera dinámica
 function loadAbi(dexName: string, contractType: string = 'router'): any {
@@ -94,9 +94,10 @@ console.log(`Total de pares a monitorear: ${PAIRS_TO_MONITOR.length}`);
 
 // Configuración de la aplicación
 const CONFIG = {
-  flashLoanFee: 0.0009, // 0.09%
-  minProfitUsd: 10,
-  estimatedGasCostEth: 0.005,
+  flashLoanFee: 0.0009,          // 0.09%
+  expectedSlippage: 0.01,        // 1% de slippage esperado
+  minProfitUsd: 3,               // Beneficio mínimo en USD (más bajo ahora)
+  estimatedGasCostEth: 0.005,    // 0.005 ETH (~$15 en precio actual)
   ethPriceUsd: 3000,
   tokenPriceUsd: {
     [TOKENS.WETH]: 3000,
@@ -153,7 +154,7 @@ function estimateProfit(
   worstOutput: BigNumber, 
   tokenAddress: string,
   tokenDecimals: number
-): { profitInToken: BigNumber; profitUsd: number } {
+): { profitInToken: BigNumber; profitUsd: number; isRentable: boolean } {
   // Calcular la comisión del préstamo flash
   const flashLoanFee = amountIn.mul(Math.floor(CONFIG.flashLoanFee * 10000)).div(10000);
   
@@ -163,14 +164,34 @@ function estimateProfit(
   // Convertir el costo del gas a tokens
   const tokenPrice = CONFIG.tokenPriceUsd[tokenAddress] || 1;
   const tokenPriceEth = tokenPrice / CONFIG.ethPriceUsd;
-  const gasCostInToken = gasCostWei.mul(ethers.utils.parseUnits("1", tokenDecimals))
-    .div(ethers.utils.parseEther(tokenPriceEth.toString()));
   
-  // Calcular beneficio neto
-  const profitInToken = bestOutput.sub(worstOutput).sub(flashLoanFee).sub(gasCostInToken);
+  let gasCostInToken: BigNumber;
+  try {
+    // Intenta el cálculo original
+    gasCostInToken = gasCostWei.mul(ethers.utils.parseUnits("1", tokenDecimals))
+      .div(ethers.utils.parseEther(tokenPriceEth.toString()));
+  } catch (error) {
+    // Usa un enfoque alternativo con menos precisión pero que no falla
+    const gasInTokenRaw = CONFIG.estimatedGasCostEth * CONFIG.ethPriceUsd / CONFIG.tokenPriceUsd[tokenAddress];
+    gasCostInToken = ethers.utils.parseUnits(gasInTokenRaw.toFixed(6), tokenDecimals);
+  }
+  
+  // Slippage estimado (1% por defecto)
+  const slippageAmount = bestOutput.mul(Math.floor(CONFIG.expectedSlippage * 10000)).div(10000);
+  
+  // Calcular beneficio neto considerando todos los costos
+  const profitInToken = bestOutput
+    .sub(worstOutput)             // Diferencia entre precios
+    .sub(flashLoanFee)            // Menos comisión del flash loan
+    .sub(gasCostInToken)          // Menos costo del gas
+    .sub(slippageAmount);         // Menos impacto del slippage
+  
   const profitUsd = parseFloat(ethers.utils.formatUnits(profitInToken, tokenDecimals)) * tokenPrice;
   
-  return { profitInToken, profitUsd };
+  // Determinar si es rentable (beneficio > 0)
+  const isRentable = profitInToken.gt(BigNumber.from(0));
+  
+  return { profitInToken, profitUsd, isRentable };
 }
 
 /**
@@ -185,12 +206,98 @@ function getDexNameByAddress(address: string): string {
   return "Unknown";
 }
 
+// Función para consultar precio según tipo de DEX
+async function getTokenPrice(
+  dexName: string, 
+  router: Contract, 
+  pair: any, 
+  deployer: any
+): Promise<BigNumber | null> {
+  try {
+    // 1. UniswapV2 y compatibles
+    if (router.interface.functions['getAmountsOut(uint256,address[])']) {
+      const path = [pair.tokenA, pair.tokenB];
+      const amounts = await fetchWithRetry(() => router.getAmountsOut(pair.amountIn, path));
+      return amounts[1];
+    }
+    
+    // 2. Aerodrome y AerodromeSS
+    if (dexName.includes('Aerodrome')) {
+      // Intentar con stable=false primero
+      try {
+        if (router.interface.functions['quoteExactInputSingle(address,address,bool,uint256)']) {
+          return await router.quoteExactInputSingle(
+            pair.tokenA, pair.tokenB, false, pair.amountIn
+          );
+        }
+      } catch {
+        // Si falla, intentar con stable=true
+        try {
+          return await router.quoteExactInputSingle(
+            pair.tokenA, pair.tokenB, true, pair.amountIn
+          );
+        } catch {
+          // Ignorar
+        }
+      }
+    }
+    
+    // 3. UniswapV3
+    if (dexName === 'UniswapV3') {
+      const quoterAddress = "0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a";
+      try {
+        // La interfaz esperada usa una struct en lugar de parámetros individuales
+        const params = {
+          tokenIn: pair.tokenA,
+          tokenOut: pair.tokenB,
+          fee: 3000,
+          amountIn: pair.amountIn,
+          sqrtPriceLimitX96: 0
+        };
+        return await quoter.callStatic.quoteExactInputSingle(params);
+      } catch (error) {
+        console.log(`UniswapV3: Error con el quoter: ${error.message}`);
+        return null;
+      }
+    }
+    
+    // 4. Baseswap, SwapBased, Alienbase (V3-like)
+    if (['BaseSwap', 'SwapBased', 'Alienbase'].includes(dexName)) {
+      if (router.interface.functions['exactInputSingle((address,address,uint24,address,uint256,uint256,uint256))']) {
+        const params = {
+          tokenIn: pair.tokenA,
+          tokenOut: pair.tokenB,
+          fee: 3000, // Fee tier, puede variar
+          recipient: deployer.address,
+          amountIn: pair.amountIn,
+          amountOutMinimum: 0,
+          sqrtPriceLimitX96: 0
+        };
+        
+        return await router.callStatic.exactInputSingle(params);
+      }
+    }
+    
+    // 5. Fallback general - intentar con quote directo si existe
+    if (router.interface.functions['quote(uint256,address,address)']) {
+      return await router.quote(pair.amountIn, pair.tokenA, pair.tokenB);
+    }
+    
+    return null;
+  } catch (error) {
+    console.log(`${dexName}: Error consultando precio: ${error.message}`);
+    return null;
+  }
+}
+
 /**
  * Función principal de monitoreo
  */
 async function main() {
   console.log("=== Iniciando monitoreo de oportunidades de arbitraje en Base Mainnet ===");
   console.log(`Fecha/Hora: ${new Date().toLocaleString()}`);
+  console.log("Usando conexión directa a Base Mainnet para consultar precios");
+  const provider = new ethers.providers.JsonRpcProvider("https://base-mainnet.g.alchemy.com/v2/WtCCG_ntdXg_-l_oeA8VzgPxfvBbJC7F");
 
   const [deployer] = await ethers.getSigners();
   console.log(`Monitoreo usando la dirección: ${deployer.address}`);
@@ -207,7 +314,7 @@ async function main() {
   for (const [dexName, routerAddress] of Object.entries(DEX_ROUTERS)) {
     try {
       const abi = loadAbi(dexName);
-      dexRouters[dexName] = new ethers.Contract(routerAddress, abi, deployer);
+      dexRouters[dexName] = new ethers.Contract(routerAddress, abi, provider);
       console.log(`✅ Router cargado: ${dexName}`);
     } catch (error) {
       console.error(`❌ Error cargando router ${dexName}:`, error);
@@ -236,15 +343,12 @@ async function main() {
           formattedAmount: string;
         }[] = [];
 
-        // Consultar cada DEX
+        // Reemplazar el loop de cada DEX con esta implementación
         for (const [dexName, router] of Object.entries(dexRouters)) {
           try {
-            // Para UniswapV2-like (y la mayoría de los forks)
-            if (router.interface.getFunction('getAmountsOut')) {
-              const amounts = await fetchWithRetry(() => 
-                router.getAmountsOut(pair.amountIn, path)
-              );
-              const amountOut = amounts[1];
+            const amountOut = await getTokenPrice(dexName, router, pair, deployer);
+            
+            if (amountOut) {
               const formattedAmount = ethers.utils.formatUnits(amountOut, pair.decimalsB);
               
               results.push({
@@ -255,77 +359,8 @@ async function main() {
               
               console.log(`${dexName}: ${formattedAmount} ${tokenBSymbol}`);
             }
-            // Para UniswapV3
-            else if (dexName === 'UniswapV3') {
-              try {
-                // Cargar ABI del Quoter
-                const quoterAddress = "0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a"; // Mainnet
-                const quoterAbi = loadAbi('UniswapV3', 'quoter');
-                const quoter = new ethers.Contract(quoterAddress, quoterAbi, deployer);
-                const amountOut = await quoter.callStatic.quoteExactInputSingle(
-                  pair.tokenA, pair.tokenB, 3000, pair.amountIn, 0
-                );
-                
-                const formattedAmount = ethers.utils.formatUnits(amountOut, pair.decimalsB);
-                results.push({
-                  dexName,
-                  amountOut,
-                  formattedAmount
-                });
-                
-                console.log(`${dexName}: ${formattedAmount} ${tokenBSymbol}`);
-              } catch (error) {
-                console.log(`${dexName}: Error al consultar precios: ${error.message}`);
-              }
-            }
-            // Para Aerodrome y AerodromeSS (tienen una interfaz diferente)
-            else if (dexName === 'Aerodrome' || dexName === 'AerodromeSS') {
-              try {
-                // Aerodrome usa una función diferente para quotes
-                // Intentemos con quoteExactInputSingle si existe
-                if (router.interface.getFunction('quoteExactInputSingle')) {
-                  const amountOut = await router.callStatic.quoteExactInputSingle(
-                    pair.tokenA,
-                    pair.tokenB,
-                    true, // stable (podría necesitar un valor diferente según el par)
-                    pair.amountIn
-                  );
-                  
-                  const formattedAmount = ethers.utils.formatUnits(amountOut, pair.decimalsB);
-                  results.push({
-                    dexName,
-                    amountOut,
-                    formattedAmount
-                  });
-                  
-                  console.log(`${dexName}: ${formattedAmount} ${tokenBSymbol}`);
-                }
-                // Si no existe quoteExactInputSingle, intenta con quote
-                else if (router.interface.getFunction('quote')) {
-                  const amountOut = await router.callStatic.quote(
-                    pair.amountIn, 
-                    pair.tokenA, 
-                    pair.tokenB
-                  );
-                  
-                  const formattedAmount = ethers.utils.formatUnits(amountOut, pair.decimalsB);
-                  results.push({
-                    dexName,
-                    amountOut,
-                    formattedAmount
-                  });
-                  
-                  console.log(`${dexName}: ${formattedAmount} ${tokenBSymbol}`);
-                }
-                else {
-                  console.log(`${dexName}: No se encontró un método compatible para consultar precios`);
-                }
-              } catch (error) {
-                console.log(`${dexName}: Error específico al consultar precios: ${error.message}`);
-              }
-            }
           } catch (error) {
-            console.log(`${dexName}: Error al consultar precios. Posible incompatibilidad de interfaz.`);
+            console.log(`${dexName}: Error al consultar precios: ${error.message}`);
           }
         }
         
@@ -356,10 +391,11 @@ async function main() {
           
           console.log(`Beneficio estimado: ${ethers.utils.formatUnits(profitData.profitInToken, pair.decimalsA)} ${tokenSymbol} ($${profitData.profitUsd.toFixed(2)})`);
           
-          // Si el beneficio supera el umbral mínimo, ejecutar arbitraje
-          if (profitData.profitUsd > CONFIG.minProfitUsd) {
-            console.log(`\n🚀 OPORTUNIDAD DE ARBITRAJE DETECTADA!`);
-            console.log(`Beneficio esperado: $${profitData.profitUsd.toFixed(2)}`);
+          // Si el beneficio supera el umbral mínimo y es rentable, ejecutar arbitraje
+          if (profitData.profitUsd > CONFIG.minProfitUsd && profitData.isRentable) {
+            console.log(`\n🚀 OPORTUNIDAD DE ARBITRAJE RENTABLE DETECTADA!`);
+            console.log(`Beneficio neto esperado: $${profitData.profitUsd.toFixed(2)} (después de todos los costos)`);
+            console.log(`Beneficio positivo en tokens: ${ethers.utils.formatUnits(profitData.profitInToken, pair.decimalsA)} ${tokenSymbol}`);
             
             try {
               // Obtener direcciones de routers por nombre
@@ -383,6 +419,11 @@ async function main() {
             } catch (error) {
               console.error("❌ Error ejecutando arbitraje:", error);
             }
+          } else if (profitData.profitUsd > 0) {
+            console.log(`\n⚠️ OPORTUNIDAD DE ARBITRAJE DETECTADA PERO NO SUFICIENTEMENTE RENTABLE`);
+            console.log(`Beneficio estimado: $${profitData.profitUsd.toFixed(2)} (menor que $${CONFIG.minProfitUsd} requerido)`);
+          } else {
+            console.log(`\n❌ NO RENTABLE: El beneficio neto es negativo después de considerar todos los costos.`);
           }
         }
       } catch (error) {

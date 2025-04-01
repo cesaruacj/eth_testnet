@@ -1,0 +1,602 @@
+[
+  {
+    "factory": "UniswapV2",
+    "pairAddress": "0xb9Cb40C4945431C93f42f81B5b0329a163eD34C8",
+    "token0": {
+      "address": "0x3157a4130A75f309caD9a522b339Ed901cD9b02D",
+      "symbol": "mPEPE",
+      "name": "MockPepe",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "reserves": [
+      "19980146194929483227343260",
+      "3002990000000004"
+    ]
+  },
+  {
+    "factory": "UniswapV2",
+    "pairAddress": "0x022AD5a6dcF83D0f6f738DF7212c981bDBE1086e",
+    "token0": {
+      "address": "0x26B6b562c77D6125b03a80A6EcebAdA525324811",
+      "symbol": "mPEPE",
+      "name": "MockPepe",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "reserves": [
+      "19980146194929469960428781",
+      "3002990000000006"
+    ]
+  },
+  {
+    "factory": "UniswapV2",
+    "pairAddress": "0x45f4Db10bb0102c133F1C70500124e4569F3eDcD",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x42069BAbe14fB1802C5CB0F50BB9D2Ad6FEf55e2",
+      "symbol": "FROK",
+      "name": "frok.ai",
+      "decimals": 18
+    },
+    "reserves": [
+      "123109748424749979712",
+      "7932473192349715549313562"
+    ]
+  },
+  {
+    "factory": "UniswapV2",
+    "pairAddress": "0x694cc6A41B2b7DDd039c368C9B817F0aE43aa412",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x4E27DE65c2124a93D9A9446156893fe38914f057",
+      "symbol": "XMN",
+      "name": "Metronotes",
+      "decimals": 9
+    },
+    "reserves": [
+      "3026015747152017",
+      "2386915790112969321594094"
+    ]
+  },
+  {
+    "factory": "UniswapV2",
+    "pairAddress": "0xA7919F296503d3afbF9b781Ef246DA4F90ee179c",
+    "token0": {
+      "address": "0x09417E6a6eB5cB69311cC2Ca3Ca10C7899f1a622",
+      "symbol": "DOHCOIN",
+      "name": "DOHCOIN",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "reserves": [
+      "2217448198582023882283120",
+      "1808174349597113"
+    ]
+  },
+  {
+    "factory": "UniswapV2",
+    "pairAddress": "0xDE66c35e01ED8e619Bf092352338ef94f2327337",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0xFF0C532FDB8Cd566Ae169C1CB157ff2Bdc83E105",
+      "symbol": "Fren Pet",
+      "name": "Fren Pet",
+      "decimals": 18
+    },
+    "reserves": [
+      "214717025856910536956",
+      "643372445255175166603134"
+    ]
+  },
+  {
+    "factory": "UniswapV2",
+    "pairAddress": "0x7C327d692B72f60b28AecEDbcC1BA784712fE7b2",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed",
+      "symbol": "DEGEN",
+      "name": "Degen",
+      "decimals": 18
+    },
+    "reserves": [
+      "186038911035924985",
+      "116264159055896806669250"
+    ]
+  },
+  {
+    "factory": "UniswapV2",
+    "pairAddress": "0x7daa830770E5000c3d16C81A5dB1a658E19d8b29",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0xAfb89a09D82FBDE58f18Ac6437B3fC81724e4dF6",
+      "symbol": "DOG",
+      "name": "The Doge NFT",
+      "decimals": 18
+    },
+    "reserves": [
+      "11293797694377146",
+      "22541246901815943012912"
+    ]
+  },
+  {
+    "factory": "UniswapV2",
+    "pairAddress": "0x6c39acC16dEb25b496c24c21E1e5f5E192eD01C8",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x4Ff77748E723f0d7B161f90B4bc505187226ED0D",
+      "symbol": "GLOOM",
+      "name": "GLOOM",
+      "decimals": 18
+    },
+    "reserves": [
+      "14483261308238",
+      "20319496559032449615487"
+    ]
+  },
+  {
+    "factory": "UniswapV2",
+    "pairAddress": "0x7b06dcE7bf637f03Fda040C147a0ca0A485A298E",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x466A3165e57441A31f7D785356B9257fb2130048",
+      "symbol": "TROLL",
+      "name": "Troll",
+      "decimals": 9
+    },
+    "reserves": [
+      "1000000000000000",
+      "19273846091147529390397"
+    ]
+  },
+  {
+    "factory": "PancakeSwap",
+    "pairAddress": "0x156BaB5865E1b4B7777d4174F75673A715fF5E15",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0xA4a7C559225E8AE2109dBA3D22e18Aa3A712D56C",
+      "symbol": "suremoon",
+      "name": "Sure Moon",
+      "decimals": 18
+    },
+    "reserves": [
+      "89696719192801",
+      "31233182708595916178544042296527"
+    ]
+  },
+  {
+    "factory": "PancakeSwap",
+    "pairAddress": "0x2f9EB5983e87FFEb205cebf049cF405368d16297",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0xE2c734AE2B87AE2968e43a36EFDcB249195B67fF",
+      "symbol": "testqs02",
+      "name": "testqs02",
+      "decimals": 18
+    },
+    "reserves": [
+      "10028832099510099",
+      "99713248195858494084391573105"
+    ]
+  },
+  {
+    "factory": "PancakeSwap",
+    "pairAddress": "0xf72aD228313061F8d7eE3c9fa2D07cc833dD9d20",
+    "token0": {
+      "address": "0x08cDD613fe9d0470c8fA6400d4DF3d1bA0940844",
+      "symbol": "testqs01",
+      "name": "testqs01",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "reserves": [
+      "36450000000000000000000000000",
+      "100000000000000"
+    ]
+  },
+  {
+    "factory": "PancakeSwap",
+    "pairAddress": "0xc637ab6D3aB0c55a7812B0b23955bA6E40859447",
+    "token0": {
+      "address": "0x3055913c90Fcc1A6CE9a358911721eEb942013A1",
+      "symbol": "Cake",
+      "name": "PancakeSwap Token",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "reserves": [
+      "1721447417901118283",
+      "2077791153233791"
+    ]
+  },
+  {
+    "factory": "PancakeSwap",
+    "pairAddress": "0x8149a91a0ABF28694FE723Fcc757125f0890Efd6",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x8Fbd0648971d56f1f2c35Fa075Ff5Bc75fb0e39D",
+      "symbol": "MBS",
+      "name": "MBS",
+      "decimals": 18
+    },
+    "reserves": [
+      "4804215576375",
+      "1208321034073308226"
+    ]
+  },
+  {
+    "factory": "PancakeSwap",
+    "pairAddress": "0xB49fB93cC7d718B37567e1eebb52a88890a014a1",
+    "token0": {
+      "address": "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb",
+      "symbol": "DAI",
+      "name": "Dai Stablecoin",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+      "symbol": "USDbC",
+      "name": "USD Base Coin",
+      "decimals": 6
+    },
+    "reserves": [
+      "325047363565695411",
+      "325571"
+    ]
+  },
+  {
+    "factory": "PancakeSwap",
+    "pairAddress": "0x79474223AEdD0339780baCcE75aBDa0BE84dcBF9",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "symbol": "USDC",
+      "name": "USD Coin",
+      "decimals": 6
+    },
+    "reserves": [
+      "105145191265213220",
+      "207757081"
+    ]
+  },
+  {
+    "factory": "PancakeSwap",
+    "pairAddress": "0x92363F9817f92a7ae0592A4cb29959A88d885cc8",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+      "symbol": "USDbC",
+      "name": "USD Base Coin",
+      "decimals": 6
+    },
+    "reserves": [
+      "9970079886633108",
+      "19682571"
+    ]
+  },
+  {
+    "factory": "PancakeSwap",
+    "pairAddress": "0x35D8042b645AB8b021b286d9fc78269c416595B5",
+    "token0": {
+      "address": "0x236aa50979D5f3De3Bd1Eeb40E81137F22ab794b",
+      "symbol": "tBTC",
+      "name": "Base tBTC v2",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "reserves": [
+      "4489052101782",
+      "195514559506809"
+    ]
+  },
+  {
+    "factory": "PancakeSwap",
+    "pairAddress": "0x7A410fe707706746a8CF595E44CF0Ff0Fd3323FD",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x69C0f5C8963d39fADCA0cA544c9976591EC12372",
+      "symbol": "suremoon",
+      "name": "Sure Moon",
+      "decimals": 18
+    },
+    "reserves": [
+      "1",
+      "617762759515"
+    ]
+  },
+  {
+    "factory": "SushiSwapV2",
+    "pairAddress": "0xf419722a09d3FcBf9a7B2f31E6F69574Fd49E163",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x8544FE9D190fD7EC52860abBf45088E81Ee24a8c",
+      "symbol": "TOSHI",
+      "name": "Toshi",
+      "decimals": 18
+    },
+    "reserves": [
+      "6426042202071976",
+      "220120694012366285494514663"
+    ]
+  },
+  {
+    "factory": "SushiSwapV2",
+    "pairAddress": "0xd9caAF26aAE413ee7d0F21bC4c86820C33a0B966",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x65B053bDE53EFf604edb5745519294317C54765e",
+      "symbol": "SEED",
+      "name": "Farmstrong Seed v2",
+      "decimals": 18
+    },
+    "reserves": [
+      "114974406033511",
+      "688710449325000325665"
+    ]
+  },
+  {
+    "factory": "SushiSwapV2",
+    "pairAddress": "0xEDc8F86740DAAfED0a38f1b73F9964aa5C80901C",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+      "symbol": "USDbC",
+      "name": "USD Base Coin",
+      "decimals": 6
+    },
+    "reserves": [
+      "266859906443396523",
+      "527585391"
+    ]
+  },
+  {
+    "factory": "SushiSwapV2",
+    "pairAddress": "0x206a3356D7D4d2D2C9EbcD7CF489F1661a488CA1",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0xEB466342C4d449BC9f53A865D5Cb90586f405215",
+      "symbol": "axlUSDC",
+      "name": "Axelar Wrapped USDC",
+      "decimals": 6
+    },
+    "reserves": [
+      "74169250806711479",
+      "146158049"
+    ]
+  },
+  {
+    "factory": "SushiSwapV2",
+    "pairAddress": "0x7395f6134220c327A42AADEBC5af681f6894ecC0",
+    "token0": {
+      "address": "0x2D0bBE13bCb5c753EC32D500993Cb46A5b83C9Ec",
+      "symbol": "MUMU",
+      "name": "MUMU",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "reserves": [
+      "50000000000000024",
+      "4"
+    ]
+  },
+  {
+    "factory": "SushiSwapV2",
+    "pairAddress": "0x2965aAcf5c82f5CD057aDa4342c3cF9C426E8f84",
+    "token0": {
+      "address": "0x14D85F1272F802813Febd432531f7b86133e3D26",
+      "symbol": "LLHCtoken",
+      "name": "LLHC Token",
+      "decimals": 8
+    },
+    "token1": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "reserves": [
+      "10000000000000000",
+      "10001565931450248"
+    ]
+  },
+  {
+    "factory": "SushiSwapV2",
+    "pairAddress": "0x1C0c62A91873842df49EE4BBD712DB7b0B54D511",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0xef4fcB5F84F97583cD6c7d4b5930B55C75183AEB",
+      "symbol": "XRN",
+      "name": "XRNetwork",
+      "decimals": 18
+    },
+    "reserves": [
+      "10689716328",
+      "1044528195581744"
+    ]
+  },
+  {
+    "factory": "SushiSwapV2",
+    "pairAddress": "0x7cab41702e41608f19Ae211718ce71f65D22C161",
+    "token0": {
+      "address": "0x1a4112e5e828b0F29Dc92A3B81485C62518607B3",
+      "symbol": "bpsTEST",
+      "name": "bpsTEST",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "reserves": [
+      "290065509843",
+      "1"
+    ]
+  },
+  {
+    "factory": "SushiSwapV2",
+    "pairAddress": "0xe6212378c6328FcC4E5F6e8e9751aD43278ad465",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0x93980959778166ccbB95Db7EcF52607240bc541e",
+      "symbol": "bpsTEST",
+      "name": "bpsTEST",
+      "decimals": 18
+    },
+    "reserves": [
+      "1",
+      "179449561870"
+    ]
+  },
+  {
+    "factory": "SushiSwapV2",
+    "pairAddress": "0x7953625Cb5f11a7c37579c253C09D58AAD1b60Cb",
+    "token0": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": 18
+    },
+    "token1": {
+      "address": "0xf6fB8b4F20E8333d28F5588DAcbc79c199d4Ff51",
+      "symbol": "BPEPE",
+      "name": "BLUEPEPE",
+      "decimals": 18
+    },
+    "reserves": [
+      "1",
+      "16693725141"
+    ]
+  }
+]
