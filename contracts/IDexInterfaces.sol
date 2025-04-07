@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-// 1. Uniswap V2 Router (y forks tipo Aerodrome si es similar)
+// 1. Uniswap V2 Router
 interface IUniswapV2Router02 {
     function getAmountsOut(uint256 amountIn, address[] calldata path)
         external

@@ -3,24 +3,25 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  // Dirección del PoolAddressesProvider de Aave en Base Mainnet
-  const addressesProvider: string = "0xe20fCBdBfFC4Dd138cE8b2E6FBb6CB49777ad64D";
+  // Dirección del PoolAddressesProvider de Aave en ETH Sepolia
+  const addressesProvider: string = "0x012bAC54348C0E635dCAc9D5FB99f06F24136514";
 
   // Dirección de ArbitrageLogic que ya desplegaste
+  // Aquí tendrías que poner la dirección real de tu contrato ArbitrageLogic desplegado
   const arbitrageLogicAddress = "0x5Ab5E43a1235fe9C31a616855954317C1d388B3D";
 
   // Imprime para debug
-  console.log("Usando PoolAddressesProvider de Base Sepolia:", addressesProvider);
+  console.log("Usando PoolAddressesProvider de Ethereum Sepolia:", addressesProvider);
 
   // Crea la fábrica del contrato
-  const FlashLoanBaseSepolia = await ethers.getContractFactory("FlashLoanBaseSepolia");
+  const FlashLoanEthereumSepolia = await ethers.getContractFactory("FlashLoanEthereumSepolia");
 
   // Despliega el contrato con ambos parámetros
-  const flashLoan = await FlashLoanBaseSepolia.deploy(addressesProvider, arbitrageLogicAddress);
+  const flashLoan = await FlashLoanEthereumSepolia.deploy(addressesProvider, arbitrageLogicAddress);
   await flashLoan.deployed();
 
   // Muestra la dirección donde se desplegó el contrato
-  console.log("FlashLoanBaseSepolia desplegado en:", flashLoan.address);
+  console.log("FlashLoanEthereumSepolia desplegado en:", flashLoan.address);
 }
 
 // Maneja errores en la ejecución del script

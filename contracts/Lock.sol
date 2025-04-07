@@ -5,7 +5,8 @@ contract Lock {
     uint public unlockTime;
     address payable public owner;
 
-    event Withdrawal(address indexed to, uint amount, uint when);
+    // Changed to match test expectations (removed the 'when' parameter)
+    event Withdrawal(address indexed to, uint amount);
 
     constructor(uint _unlockTime) payable {
         require(
@@ -19,7 +20,10 @@ contract Lock {
     function withdraw() public {
         require(block.timestamp >= unlockTime, "You can't withdraw yet");
         require(msg.sender == owner, "You aren't the owner");
-        emit Withdrawal(msg.sender, address(this).balance, block.timestamp);
+        
+        // Updated event emission to match the modified event signature
+        emit Withdrawal(msg.sender, address(this).balance);
+        
         owner.transfer(address(this).balance);
     }
 }

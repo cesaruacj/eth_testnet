@@ -1,15 +1,19 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "dotenv/config";
-import "@nomiclabs/hardhat-ethers";             // v5 compatible
-// import "@nomiclabs/hardhat-waffle";             // v5 compatible
-import "@typechain/hardhat";                    // make sure using v8.1.1
-import "@nomiclabs/hardhat-etherscan";          // v5 compatible
-import "hardhat-gas-reporter";                  // v5 compatible
-import "solidity-coverage";                     // v5 compatible
-import "@nomicfoundation/hardhat-chai-matchers"; // use v1 for ethers v5
+import "@nomiclabs/hardhat-ethers";
+import "@typechain/hardhat";
+import "@nomiclabs/hardhat-etherscan";
+import "hardhat-gas-reporter";
+import "solidity-coverage";
+import "@nomicfoundation/hardhat-chai-matchers";
 
-// Configuración simplificada - siempre usando Base Mainnet
-console.log(`Usando Base Mainnet (fork local)`);
+// Configuración de Hardhat usando Sepolia testnet
+console.log(`Configurando para Ethereum Sepolia testnet`);
+
+// Asegúrate de tener estas variables en tu archivo .env
+const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL
+const PRIVATE_KEY = process.env.PRIVATE_KEY
+const ETHERSCAN_API_KEY = process.env.API_KEY
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -20,34 +24,23 @@ const config: HardhatUserConfig = {
     ],
   },
   networks: {
+    // Para desarrollo local con fork de Sepolia
     hardhat: {
       forking: {
-        url: `https://base-mainnet.g.alchemy.com/v2/WtCCG_ntdXg_-l_oeA8VzgPxfvBbJC7F`,
+        url: SEPOLIA_RPC_URL,
       },
-      hardfork: "merge",
-      gasPrice: "auto",
-      gasMultiplier: 2,
+      chainId: 11155111, // ID de cadena de Sepolia
     },
-    baseMainnet: {
-      url: `https://base-mainnet.g.alchemy.com/v2/WtCCG_ntdXg_-l_oeA8VzgPxfvBbJC7F`,
-      chainId: 8453,
-      accounts: [process.env.PRIVATE_KEY],
-      gasPrice: "auto", 
+    // Conexión directa a Sepolia
+    sepolia: {
+      url: SEPOLIA_RPC_URL,
+      accounts: [PRIVATE_KEY],
+      chainId: 11155111,
       gasMultiplier: 1.5,
-    },
+    }
   },
   etherscan: {
-    apiKey: process.env.BASESCAN_API_KEY,
-    customChains: [
-      {
-        network: "baseSepolia",
-        chainId: 84532,
-        urls: {
-          apiURL: "https://api-sepolia.basescan.org/api",
-          browserURL: "https://sepolia.basescan.org",
-        },
-      },
-    ],
+    apiKey: ETHERSCAN_API_KEY,
   },
   paths: {
     sources: "./contracts",
@@ -56,12 +49,14 @@ const config: HardhatUserConfig = {
     artifacts: "./artifacts",
   },
   mocha: {
-    timeout: 300000, // Aumentar a 5 minutos para operaciones largas
+    timeout: 300000, // 5 minutos
   },
   typechain: {
     outDir: 'typechain-types',
-    target: '@typechain/ethers-v5',
+    target: 'ethers-v5',
     alwaysGenerateOverloads: false,
+    externalArtifacts: [],
+    dontOverrideCompile: true
   },
 };
 

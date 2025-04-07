@@ -5,7 +5,7 @@ import * as path from 'path';
 // Función para cargar ABIs específicas de cada DEX
 function loadAbi(dexName: string, contractType: string = 'factory'): any {
   try {
-    const abiPath = path.join(__dirname, '..', 'external', 'abis', 'mainnet', dexName, `${contractType.toLowerCase()}.json`);
+    const abiPath = path.join(__dirname, '..', 'external', 'abis', 'sepolia', dexName, `${contractType.toLowerCase()}.json`);
     if (fs.existsSync(abiPath)) {
       return JSON.parse(fs.readFileSync(abiPath, 'utf8'));
     } else {
@@ -21,26 +21,19 @@ function loadAbi(dexName: string, contractType: string = 'factory'): any {
 async function main() {
   console.log("Iniciando descubrimiento de los 10 pares con mayor liquidez en cada DEX...");
   
-  // Crear proveedor directo a Base Mainnet (solo lectura)
-  const provider = new ethers.providers.JsonRpcProvider("https://base-mainnet.g.alchemy.com/v2/WtCCG_ntdXg_-l_oeA8VzgPxfvBbJC7F");
-  console.log(`Conectado directamente a Base Mainnet en modo de solo lectura`);
+  // Crear proveedor directo a Ethereum Sepolia
+  const provider = new ethers.providers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/" + process.env.ALCHEMY_API_KEY);
+  console.log(`Conectado directamente a Ethereum Sepolia en modo de solo lectura`);
   
   // Verificar conexión obteniendo el número de bloque
   const blockNumber = await provider.getBlockNumber();
   console.log(`Conectado al bloque ${blockNumber}`);
   
-  // Mantener todos los DEXs
+  // Mantener DEXs específicos de Sepolia
   const factories = {
-    AerodromeSS: "0x5e7BB104d84c7CB9B682AaC2F3d509f5F406809A",
-    Aerodrome: "0x420DD381b31aEf6683db6B902084cB0FFECe40Da",
-    Alienbase: "0x0Fd83557b2be93617c9C1C1B6fd549401C74558C",
-    BaseSwap: "0x38015D05f4fEC8AFe15D7cc0386a126574e8077B",
-    SwapBased: "0xb5620F90e803C7F957A9EF351B8DB3C746021BEa",
-    UniswapV2: "0x8909Dc15e40173Ff4699343b6eB8132c65e18eC6",
-    UniswapV3: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD",
-    UniswapV4: "0x498581ff718922c3f8e6a244956af099b2652b2b",
-    PancakeSwap: "0x02a84c1b3BBD7401a5f7fa98a384EBC70bB5749E",
-    SushiSwapV2: "0x71524B4f93c58fcbF659783284E38825f0622859"
+    UniswapV2: "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+    SushiSwapV2: "0x734583f62Bb6ACe3c9bA9bd5A53143CA2Ce8C55A",
+    UniswapV3: "0x0227628f3F023bb0B980b67D528571c95c6DaC1c"
   };
   
   // ABI genérico en caso de que no se encuentre uno específico
@@ -184,7 +177,7 @@ async function main() {
   }
   
   // Guardar resultados
-  const outputPath = path.join(dataDir, `top-pairs-mainnet.json`);
+  const outputPath = path.join(dataDir, `top-pairs-sepolia.json`);
   fs.writeFileSync(outputPath, JSON.stringify(allDiscoveredPairs, null, 2));
   
   console.log(`\nDescubrimiento completado. Guardados ${allDiscoveredPairs.length} pares en ${outputPath}`);

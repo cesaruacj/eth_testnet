@@ -3,12 +3,12 @@ import { BigNumber, Contract } from "ethers";
 import * as fs from 'fs';
 import * as path from 'path';
 
-console.log(`Ejecutando en red: Base Mainnet (fork)`);
+console.log(`Ejecutando en red: Ethereum Sepolia`);
 
 // Importar ABIs de manera dinámica
 function loadAbi(dexName: string, contractType: string = 'router'): any {
-  // Primero intentamos cargar desde la carpeta específica de mainnet
-  const networkPath = path.join(__dirname, '..', 'external', 'abis', 'mainnet', dexName, `${contractType.toLowerCase()}.json`);
+  // Primero intentamos cargar desde la carpeta específica de sepolia
+  const networkPath = path.join(__dirname, '..', 'external', 'abis', 'sepolia', dexName, `${contractType.toLowerCase()}.json`);
   
   if (fs.existsSync(networkPath)) {
     return JSON.parse(fs.readFileSync(networkPath, 'utf8'));
@@ -25,31 +25,28 @@ function loadAbi(dexName: string, contractType: string = 'router'): any {
   throw new Error(`ABI no encontrada para ${dexName} ${contractType}`);
 }
 
-// Definir direcciones de tokens en Base Mainnet
+// Tokens en Ethereum Sepolia
 const TOKENS = {
-  WETH: "0x4200000000000000000000000000000000000006",
-  USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", 
-  DAI: "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb"
+  METH: "0x4f7a67464b5976d7547c860109e4432d50afb38e", // ETH Sepolia (18 decimals)
+  UNI:  "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984", // UNI Sepolia (18 decimals)
+  YU:   "0xe0232d625ea3b94698f0a7dff702931b704083c9", // Yala stable coin Sepolia (6 decimals)
+  MON:  "0x810a3b22c91002155d305c4ce032978e3a97f8c4", // MON Sepolia (assumed 18 decimals)
+  YBTC: "0xbbd3edd4d3b519c0d14965d9311185cfac8c3220", // YBTC Sepolia (assumed 8 decimals)
+  WETH: "0xfff9976782d46cc05630d1f6ebab18b2324d6b14"  // WETH Sepolia (18 decimals)
 };
 
-// Routers en Base Mainnet
+// Routers en Sepolia
 const DEX_ROUTERS = {
-  AerodromeSS: "0xBE6D8f0d05cC4be24d5167a3eF062215bE6D18a5",
-  Aerodrome: "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43",
-  Alienbase: "0x8c1A3cF8f83074169FE5D7aD50B978e1cD6b37c7",
-  BaseSwap: "0x1B8eea9315bE495187D873DA7773a874545D9D48",
-  SwapBased: "0x756C6BbDd915202adac7beBB1c6C89aC0886503f",
-  UniswapV2: "0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24",
-  UniswapV3: "0x2626664c2603336E57B271c5C0b26F421741e481",
-  UniswapV4: "0x6ff5693b99212da76ad316178a184ab56d299b43",
-  PancakeSwap: "0x8cFe327CEc66d1C090Dd72bd0FF11d690C33a2Eb",
-  SushiSwapV2: "0x6BDED42c6DA8FBf0d2bA55B2fa120C5e0c8D7891"
+  SushiSwapV2: "0xeaBcE3E74EF41FB40024a21Cc2ee2F5dDc615791",
+  UniswapV3: "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD",
+  UniswapV4: "0x3a9d48ab9751398bbfa63ad67599bb04e4bdf98b",
+  BalancerV2: "0x5e315f96389C1aaF9324D97d3512ae1e0Bf3C21a"
 };
 
 // Cargar pares descubiertos dinámicamente
 let DISCOVERED_PAIRS = [];
 try {
-  const pairsPath = path.join(__dirname, '..', 'data', 'pairs-mainnet.json');
+  const pairsPath = path.join(__dirname, '..', 'data', 'pairs-sepolia.json');
   if (fs.existsSync(pairsPath)) {
     DISCOVERED_PAIRS = JSON.parse(fs.readFileSync(pairsPath, 'utf8'));
     console.log(`Cargados ${DISCOVERED_PAIRS.length} pares desde ${pairsPath}`);
@@ -58,11 +55,64 @@ try {
   console.warn("⚠️ No se encontraron pares descubiertos. Usando pares predefinidos.");
 }
 
-// Pares a monitorear (combina predefinidos y descubiertos)
+// Pares a monitorear (corregido con comas y decimales adecuados)
 const PAIRS_TO_MONITOR = [
-  { tokenA: TOKENS.USDC, tokenB: TOKENS.WETH, amountIn: ethers.utils.parseUnits("1000", 6), decimalsA: 6, decimalsB: 18 },
-  { tokenA: TOKENS.DAI, tokenB: TOKENS.WETH, amountIn: ethers.utils.parseUnits("1000", 18), decimalsA: 18, decimalsB: 18 },
-  { tokenA: TOKENS.USDC, tokenB: TOKENS.DAI, amountIn: ethers.utils.parseUnits("1000", 6), decimalsA: 6, decimalsB: 18 }
+  {
+    tokenA: TOKENS.UNI,
+    tokenB: TOKENS.METH,
+    amountIn: ethers.utils.parseUnits("1000", 18),
+    decimalsA: 18,
+    decimalsB: 18
+  },
+  {
+    tokenA: TOKENS.YU,
+    tokenB: TOKENS.METH,
+    amountIn: ethers.utils.parseUnits("1000", 6),
+    decimalsA: 6,
+    decimalsB: 18
+  },
+  {
+    tokenA: TOKENS.UNI,
+    tokenB: TOKENS.YU,
+    amountIn: ethers.utils.parseUnits("1000", 18),
+    decimalsA: 18,
+    decimalsB: 6
+  },
+  {
+    tokenA: TOKENS.UNI,
+    tokenB: TOKENS.MON,
+    amountIn: ethers.utils.parseUnits("1000", 18),
+    decimalsA: 18,
+    decimalsB: 18
+  },
+  {
+    tokenA: TOKENS.MON,
+    tokenB: TOKENS.WETH,
+    amountIn: ethers.utils.parseUnits("1000", 18),
+    decimalsA: 18,
+    decimalsB: 18
+  },
+  {
+    tokenA: TOKENS.MON,
+    tokenB: TOKENS.YBTC,
+    amountIn: ethers.utils.parseUnits("1000", 18),
+    decimalsA: 18,
+    decimalsB: 8
+  },
+  {
+    tokenA: TOKENS.YBTC,
+    tokenB: TOKENS.WETH,
+    amountIn: ethers.utils.parseUnits("1000", 8),
+    decimalsA: 8,
+    decimalsB: 18
+  },
+  {
+    tokenA: TOKENS.WETH,
+    tokenB: TOKENS.YBTC,
+    amountIn: ethers.utils.parseUnits("1000", 18),
+    decimalsA: 18,
+    decimalsB: 8
+  }
 ];
 
 // Agregar pares descubiertos (opcional: limitar a un máximo)
@@ -96,8 +146,8 @@ console.log(`Total de pares a monitorear: ${PAIRS_TO_MONITOR.length}`);
 const CONFIG = {
   flashLoanFee: 0.0009,          // 0.09%
   expectedSlippage: 0.01,        // 1% de slippage esperado
-  minProfitUsd: 3,               // Beneficio mínimo en USD (más bajo ahora)
-  estimatedGasCostEth: 0.005,    // 0.005 ETH (~$15 en precio actual)
+  minProfitUsd: 3,               // Beneficio mínimo en USD
+  estimatedGasCostEth: 0.002,    // 0.002 ETH (ajustado para Sepolia)
   ethPriceUsd: 3000,
   tokenPriceUsd: {
     [TOKENS.WETH]: 3000,
@@ -106,28 +156,10 @@ const CONFIG = {
   },
   maxRetries: 3,
   pollingInterval: 5000, // ms
-  flashLoanContractAddress: "0xCc0801A1f1E0D5eAe68d1d4dF7D82881D36c4fdb"
+  flashLoanContractAddress: "0x012b50b13Be3cEfe9B2Bd51b1685A81e4eCE16D5B6C9A"
 };
 
-// Añadir al monitor-arbitrage-mainnet.ts (similar a testnet)
-// Crear un registro de pares que han mostrado diferencias de precio significativas
-const pairPerformance = {};
-let cycleCount = 0;
-
-// Intentar cargar el historial de rendimiento si existe
-const performancePath = path.join(__dirname, '..', 'data', 'performance-mainnet.json');
-try {
-  if (fs.existsSync(performancePath)) {
-    Object.assign(pairPerformance, JSON.parse(fs.readFileSync(performancePath, 'utf8')));
-    console.log(`Cargado historial de rendimiento para ${Object.keys(pairPerformance).length} pares`);
-  }
-} catch (error) {
-  console.warn("⚠️ No se pudo cargar el historial de rendimiento");
-}
-
-// Configuración de procesamiento por lotes
-const BATCH_SIZE = 20; // Más grande para mainnet por tener más pares
-const BATCH_DELAY = 1000;
+// Continúa el resto del archivo igual...
 
 /**
  * Función para intentar operaciones con reintentos
@@ -246,6 +278,10 @@ async function getTokenPrice(
     if (dexName === 'UniswapV3') {
       const quoterAddress = "0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a";
       try {
+        // Crear instancia del contrato quoter
+        const quoterAbi = ["function quoteExactInputSingle(tuple(address tokenIn, address tokenOut, uint24 fee, uint256 amountIn, uint160 sqrtPriceLimitX96)) external returns (uint256 amountOut)"];
+        const quoter = new ethers.Contract(quoterAddress, quoterAbi, router.provider);
+        
         // La interfaz esperada usa una struct en lugar de parámetros individuales
         const params = {
           tokenIn: pair.tokenA,
@@ -294,17 +330,17 @@ async function getTokenPrice(
  * Función principal de monitoreo
  */
 async function main() {
-  console.log("=== Iniciando monitoreo de oportunidades de arbitraje en Base Mainnet ===");
+  console.log("=== Iniciando monitoreo de oportunidades de arbitraje en Ethereum Sepolia ===");
   console.log(`Fecha/Hora: ${new Date().toLocaleString()}`);
-  console.log("Usando conexión directa a Base Mainnet para consultar precios");
-  const provider = new ethers.providers.JsonRpcProvider("https://base-mainnet.g.alchemy.com/v2/WtCCG_ntdXg_-l_oeA8VzgPxfvBbJC7F");
+  console.log("Usando conexión directa a Ethereum Sepolia para consultar precios");
+  const provider = new ethers.providers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/JDR4rpYy7x_w4r0Z0P5QV9W-f_H7DqZ7");
 
   const [deployer] = await ethers.getSigners();
   console.log(`Monitoreo usando la dirección: ${deployer.address}`);
   
   // Cargar la instancia del contrato FlashLoan
   const flashLoan = await ethers.getContractAt(
-    "FlashLoanBaseSepolia",
+    "FlashLoanSepolia",  // Actualizado de FlashLoanBaseSepolia a FlashLoanSepolia
     CONFIG.flashLoanContractAddress,
     deployer
   );
@@ -439,6 +475,6 @@ async function main() {
 
 // Iniciar el monitoreo
 main().catch((error) => {
-  console.error("❌ Error fatal en el monitor de mainnet:", error);
+  console.error("❌ Error fatal en el monitor de sepolia:", error);
   process.exit(1);
 });

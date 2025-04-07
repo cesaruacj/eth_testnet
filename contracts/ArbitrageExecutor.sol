@@ -51,9 +51,9 @@ contract ArbitrageExecutor is ReentrancyGuard {
     address public owner;
     // Mapeo de token -> oráculo (Chainlink) para obtener precios en USD (8 decimales)
     mapping(address => AggregatorV3Interface) public priceFeeds;
-    // Router de DEX a utilizar (por ejemplo, Aerodrome, UniswapV2, etc.)
+    // Router de DEX a utilizar (por ejemplo, UniswapV2, etc.)
     IUniswapV2Router02 public dexRouter;
-    // Token base para enrutar swaps (por ejemplo, WETH o WBASE en BaseChain)
+    // Token base para enrutar swaps (WETH en Ethereum)
     address public baseToken;
 
     event ArbitrageExecuted(

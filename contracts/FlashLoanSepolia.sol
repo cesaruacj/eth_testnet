@@ -6,7 +6,7 @@ import { IPool } from "@aave/core-v3/contracts/interfaces/IPool.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./ArbitrageLogic.sol";
 
-contract FlashLoanBaseSepolia {
+contract FlashLoanSepolia {
     IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
     IPool public immutable POOL;
 
