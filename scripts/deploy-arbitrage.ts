@@ -21,8 +21,7 @@ async function main() {
   console.log(`ArbitrageLogic deployed to: ${arbitrageLogic.address}`);
 
   // Desplegar FlashLoanSepolia con la dirección del Provider de Aave y ArbitrageLogic
-  const rawAddress = "0x012b50b13Be3cEfe9B2Bd51b1685A81e4eCE16D5"; 
-  const AAVE_PROVIDER_ADDRESS = ethers.utils.getAddress(rawAddress);
+  const AAVE_PROVIDER_ADDRESS = "0x0496275d34753A48320CA58103d5220d394FF77F"; // Dirección del Aave Provider en Sepolia
   const FlashLoanFactory = await ethers.getContractFactory("FlashLoanSepolia");
   const flashLoan = await FlashLoanFactory.deploy(AAVE_PROVIDER_ADDRESS, arbitrageLogic.address);
   await flashLoan.deployed();

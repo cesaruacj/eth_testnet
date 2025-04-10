@@ -27,15 +27,14 @@ function loadAbi(dexName: string, contractType: string = 'router'): any {
 
 // Tokens en Ethereum Sepolia
 const TOKENS = {
-  METH: "0x4f7a67464b5976d7547c860109e4432d50afb38e", // ETH Sepolia (18 decimals)
   UNI:  "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984", // UNI Sepolia (18 decimals)
   YU:   "0xe0232d625ea3b94698f0a7dff702931b704083c9", // Yala stable coin Sepolia (6 decimals)
-  MON:  "0x810a3b22c91002155d305c4ce032978e3a97f8c4", // MON Sepolia (assumed 18 decimals)
-  YBTC: "0xbbd3edd4d3b519c0d14965d9311185cfac8c3220", // YBTC Sepolia (assumed 8 decimals)
+  MON:  "0x810a3b22c91002155d305c4ce032978e3a97f8c4", // MON Sepolia (18 decimals)
+  YBTC: "0xbbd3edd4d3b519c0d14965d9311185cfac8c3220", // YBTC Sepolia (8 decimals)
   WETH: "0xfff9976782d46cc05630d1f6ebab18b2324d6b14"  // WETH Sepolia (18 decimals)
 };
 
-// Routers en Sepolia
+// Routers en Sepolia - Solo mantenemos SushiSwapV2, BalancerV2, UniswapV3 y UniswapV4
 const DEX_ROUTERS = {
   SushiSwapV2: "0xeaBcE3E74EF41FB40024a21Cc2ee2F5dDc615791",
   UniswapV3: "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD",
@@ -55,18 +54,18 @@ try {
   console.warn("⚠️ No se encontraron pares descubiertos. Usando pares predefinidos.");
 }
 
-// Pares a monitorear (corregido con comas y decimales adecuados)
+// Pares a monitorear (corregido para eliminar METH que no existe)
 const PAIRS_TO_MONITOR = [
   {
     tokenA: TOKENS.UNI,
-    tokenB: TOKENS.METH,
+    tokenB: TOKENS.WETH,  // Cambiado de METH a WETH
     amountIn: ethers.utils.parseUnits("1000", 18),
     decimalsA: 18,
     decimalsB: 18
   },
   {
     tokenA: TOKENS.YU,
-    tokenB: TOKENS.METH,
+    tokenB: TOKENS.WETH,  // Cambiado de METH a WETH
     amountIn: ethers.utils.parseUnits("1000", 6),
     decimalsA: 6,
     decimalsB: 18
@@ -151,15 +150,12 @@ const CONFIG = {
   ethPriceUsd: 3000,
   tokenPriceUsd: {
     [TOKENS.WETH]: 3000,
-    [TOKENS.USDC]: 1,
-    [TOKENS.DAI]: 1
+    [TOKENS.YU]: 1    // Asumimos YU como stablecoin
   },
   maxRetries: 3,
   pollingInterval: 5000, // ms
-  flashLoanContractAddress: "0x012b50b13Be3cEfe9B2Bd51b1685A81e4eCE16D5B6C9A"
+  flashLoanContractAddress: "0x012B50B13Be3cEfe9B2Bd51b1685A81e4eCE16D5" // dirección del contrato FlashLoan
 };
-
-// Continúa el resto del archivo igual...
 
 /**
  * Función para intentar operaciones con reintentos
@@ -170,7 +166,7 @@ async function fetchWithRetry<T>(fn: () => Promise<T>, retries = 0): Promise<T> 
   } catch (error) {
     if (retries < CONFIG.maxRetries) {
       console.log(`Reintentando operación... (${retries + 1}/${CONFIG.maxRetries})`);
-      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
+      await new Promise(resolve => setTimeout(resolve, 2000 * Math.pow(2, retries)));
       return fetchWithRetry(fn, retries + 1);
     }
     throw error;
@@ -204,7 +200,7 @@ function estimateProfit(
       .div(ethers.utils.parseEther(tokenPriceEth.toString()));
   } catch (error) {
     // Usa un enfoque alternativo con menos precisión pero que no falla
-    const gasInTokenRaw = CONFIG.estimatedGasCostEth * CONFIG.ethPriceUsd / CONFIG.tokenPriceUsd[tokenAddress];
+    const gasInTokenRaw = CONFIG.estimatedGasCostEth * CONFIG.ethPriceUsd / tokenPrice;
     gasCostInToken = ethers.utils.parseUnits(gasInTokenRaw.toFixed(6), tokenDecimals);
   }
   
@@ -220,8 +216,8 @@ function estimateProfit(
   
   const profitUsd = parseFloat(ethers.utils.formatUnits(profitInToken, tokenDecimals)) * tokenPrice;
   
-  // Determinar si es rentable (beneficio > 0)
-  const isRentable = profitInToken.gt(BigNumber.from(0));
+  // Determinar si es rentable (beneficio > umbral mínimo)
+  const isRentable = profitInToken.gt(BigNumber.from(0)) && profitUsd > CONFIG.minProfitUsd;
   
   return { profitInToken, profitUsd, isRentable };
 }
@@ -243,74 +239,77 @@ async function getTokenPrice(
   dexName: string, 
   router: Contract, 
   pair: any, 
-  deployer: any
+  deployer: any,
+  provider: ethers.providers.Provider
 ): Promise<BigNumber | null> {
   try {
-    // 1. UniswapV2 y compatibles
-    if (router.interface.functions['getAmountsOut(uint256,address[])']) {
-      const path = [pair.tokenA, pair.tokenB];
-      const amounts = await fetchWithRetry(() => router.getAmountsOut(pair.amountIn, path));
-      return amounts[1];
+    // 1. SushiSwapV2 (compatible con UniswapV2)
+    if (dexName === 'SushiSwapV2') {
+      if (router.interface.functions['getAmountsOut(uint256,address[])']) {
+        const path = [pair.tokenA, pair.tokenB];
+        const amounts = await fetchWithRetry(() => router.getAmountsOut(pair.amountIn, path));
+        return amounts[1];
+      }
     }
     
-    // 2. Aerodrome y AerodromeSS
-    if (dexName.includes('Aerodrome')) {
-      // Intentar con stable=false primero
-      try {
-        if (router.interface.functions['quoteExactInputSingle(address,address,bool,uint256)']) {
-          return await router.quoteExactInputSingle(
-            pair.tokenA, pair.tokenB, false, pair.amountIn
-          );
-        }
-      } catch {
-        // Si falla, intentar con stable=true
-        try {
-          return await router.quoteExactInputSingle(
-            pair.tokenA, pair.tokenB, true, pair.amountIn
-          );
-        } catch {
-          // Ignorar
-        }
+    // 2. BalancerV2
+    if (dexName === 'BalancerV2') {
+      if (router.interface.functions['getAmountOut(address,address,uint256)']) {
+        return await router.getAmountOut(pair.tokenA, pair.tokenB, pair.amountIn);
       }
     }
     
     // 3. UniswapV3
     if (dexName === 'UniswapV3') {
-      const quoterAddress = "0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a";
+      const quoterAddress = "0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3"; // Quoter en Sepolia
       try {
         // Crear instancia del contrato quoter
-        const quoterAbi = ["function quoteExactInputSingle(tuple(address tokenIn, address tokenOut, uint24 fee, uint256 amountIn, uint160 sqrtPriceLimitX96)) external returns (uint256 amountOut)"];
-        const quoter = new ethers.Contract(quoterAddress, quoterAbi, router.provider);
+        const quoterAbi = loadAbi("UniswapV3", "quoter");
+        const quoter = new ethers.Contract(quoterAddress, quoterAbi, provider);
         
-        // La interfaz esperada usa una struct en lugar de parámetros individuales
-        const params = {
-          tokenIn: pair.tokenA,
-          tokenOut: pair.tokenB,
-          fee: 3000,
-          amountIn: pair.amountIn,
-          sqrtPriceLimitX96: 0
-        };
-        return await quoter.callStatic.quoteExactInputSingle(params);
+        try {
+          // Intentar con quoteExactInputSingle(tuple)
+          const params = {
+            tokenIn: pair.tokenA,
+            tokenOut: pair.tokenB,
+            fee: 3000,
+            amountIn: pair.amountIn,
+            sqrtPriceLimitX96: 0
+          };
+          return await quoter.callStatic.quoteExactInputSingle(params);
+        } catch (innerError) {
+          // Si falla, intentar con parámetros individuales
+          return await quoter.callStatic.quoteExactInputSingle(
+            pair.tokenA,
+            pair.tokenB,
+            3000,
+            pair.amountIn,
+            0
+          );
+        }
       } catch (error) {
         console.log(`UniswapV3: Error con el quoter: ${error.message}`);
         return null;
       }
     }
     
-    // 4. Baseswap, SwapBased, Alienbase (V3-like)
-    if (['BaseSwap', 'SwapBased', 'Alienbase'].includes(dexName)) {
-      if (router.interface.functions['exactInputSingle((address,address,uint24,address,uint256,uint256,uint256))']) {
-        const params = {
-          tokenIn: pair.tokenA,
-          tokenOut: pair.tokenB,
-          fee: 3000, // Fee tier, puede variar
-          recipient: deployer.address,
-          amountIn: pair.amountIn,
-          amountOutMinimum: 0,
-          sqrtPriceLimitX96: 0
-        };
+    // 4. UniswapV4
+    if (dexName === 'UniswapV4') {
+      const quoterAddress = "0x61b3f2011a92d183c7dbadbda940a7555ccf9227"; // Quoter para UniswapV4 en Sepolia
+      try {
+        const quoterAbi = loadAbi("UniswapV4", "quoter");
+        const quoter = new ethers.Contract(quoterAddress, quoterAbi, provider);
         
-        return await router.callStatic.exactInputSingle(params);
+        return await quoter.callStatic.quoteExactInputSingle(
+          pair.tokenA,
+          pair.tokenB,
+          3000, // Usar fee tier 0.3%
+          pair.amountIn,
+          0 // Sin limite de precio
+        );
+      } catch (error) {
+        console.log(`UniswapV4: Error con el quoter: ${error.message}`);
+        return null;
       }
     }
     
@@ -327,6 +326,68 @@ async function getTokenPrice(
 }
 
 /**
+ * New function to quickly check liquidity across DEXes
+ */
+async function checkLiquidityQuickly(dexRouters: Record<string, Contract>, provider: ethers.providers.Provider) {
+  console.log("🔍 Checking liquidity for all pairs across DEXes...");
+  
+  // Store liquidity information
+  const liquidityMap: Record<string, string[]> = {};
+  
+  // Create batch of promises for parallel execution
+  const liquidityChecks: Promise<void>[] = [];
+  
+  for (const pair of PAIRS_TO_MONITOR) {
+    const pairKey = `${pair.tokenA}_${pair.tokenB}`;
+    liquidityMap[pairKey] = [];
+    
+    for (const [dexName, router] of Object.entries(dexRouters)) {
+      // Create a promise for each check but don't wait
+      const check = async () => {
+        try {
+          const amountOut = await getTokenPrice(dexName, router, pair, null, provider);
+          if (amountOut && !amountOut.isZero()) {
+            liquidityMap[pairKey].push(dexName);
+          }
+        } catch (error) {
+          // Silently fail - we're just checking quickly
+        }
+      };
+      
+      liquidityChecks.push(check());
+    }
+  }
+  
+  // Set timeout to limit how long we wait
+  const timeoutPromise = new Promise<void>(resolve => setTimeout(() => resolve(), 5000));
+  
+  // Wait for all checks to complete or timeout
+  await Promise.race([
+    Promise.allSettled(liquidityChecks),
+    timeoutPromise
+  ]);
+  
+  // Display results
+  console.log("\n===== LIQUIDITY SUMMARY =====");
+  for (const [pairKey, dexes] of Object.entries(liquidityMap)) {
+    const [tokenAAddr, tokenBAddr] = pairKey.split('_');
+    const tokenA = Object.entries(TOKENS).find(([, addr]) => addr === tokenAAddr)?.[0] || 'Unknown';
+    const tokenB = Object.entries(TOKENS).find(([, addr]) => addr === tokenBAddr)?.[0] || 'Unknown';
+    
+    if (dexes.length >= 2) {
+      console.log(`✅ ${tokenA}/${tokenB}: Liquidity on ${dexes.length} DEXes (${dexes.join(', ')})`);
+    } else if (dexes.length === 1) {
+      console.log(`⚠️ ${tokenA}/${tokenB}: Liquidity on only 1 DEX (${dexes.join(', ')})`);
+    } else {
+      console.log(`❌ ${tokenA}/${tokenB}: No liquidity found`);
+    }
+  }
+  console.log("============================\n");
+  
+  return liquidityMap;
+}
+
+/**
  * Función principal de monitoreo
  */
 async function main() {
@@ -340,7 +401,7 @@ async function main() {
   
   // Cargar la instancia del contrato FlashLoan
   const flashLoan = await ethers.getContractAt(
-    "FlashLoanSepolia",  // Actualizado de FlashLoanBaseSepolia a FlashLoanSepolia
+    "FlashLoanSepolia",
     CONFIG.flashLoanContractAddress,
     deployer
   );
@@ -359,18 +420,26 @@ async function main() {
   
   console.log(`\nMonitoreando ${PAIRS_TO_MONITOR.length} pares de tokens...`);
 
+  // Quick liquidity check before starting monitoring
+  const liquidityMap = await checkLiquidityQuickly(dexRouters, provider);
+  
+  // Optional: Filter pairs to only monitor those with sufficient liquidity
+  const pairsWithLiquidity = PAIRS_TO_MONITOR.filter(pair => {
+    const pairKey = `${pair.tokenA}_${pair.tokenB}`;
+    return liquidityMap[pairKey] && liquidityMap[pairKey].length >= 2;
+  });
+  
+  console.log(`Found ${pairsWithLiquidity.length} pairs with liquidity on at least 2 DEXes`);
+
   // Monitorización continua
   while (true) {
-    for (const pair of PAIRS_TO_MONITOR) {
+    for (const pair of pairsWithLiquidity) {
       try {
         // Obtener símbolo para log más legible
         const tokenSymbol = Object.entries(TOKENS).find(([, addr]) => addr === pair.tokenA)?.[0] || 'Unknown';
         const tokenBSymbol = Object.entries(TOKENS).find(([, addr]) => addr === pair.tokenB)?.[0] || 'Unknown';
         
         console.log(`\n----- Verificando par ${tokenSymbol}/${tokenBSymbol} -----`);
-        
-        // Preparar ruta para getAmountsOut
-        const path = [pair.tokenA, pair.tokenB];
         
         // Resultados por DEX
         const results: {
@@ -379,10 +448,10 @@ async function main() {
           formattedAmount: string;
         }[] = [];
 
-        // Reemplazar el loop de cada DEX con esta implementación
+        // Obtener precios de todos los DEXes
         for (const [dexName, router] of Object.entries(dexRouters)) {
           try {
-            const amountOut = await getTokenPrice(dexName, router, pair, deployer);
+            const amountOut = await getTokenPrice(dexName, router, pair, deployer, provider);
             
             if (amountOut) {
               const formattedAmount = ethers.utils.formatUnits(amountOut, pair.decimalsB);
@@ -428,7 +497,7 @@ async function main() {
           console.log(`Beneficio estimado: ${ethers.utils.formatUnits(profitData.profitInToken, pair.decimalsA)} ${tokenSymbol} ($${profitData.profitUsd.toFixed(2)})`);
           
           // Si el beneficio supera el umbral mínimo y es rentable, ejecutar arbitraje
-          if (profitData.profitUsd > CONFIG.minProfitUsd && profitData.isRentable) {
+          if (profitData.isRentable) {
             console.log(`\n🚀 OPORTUNIDAD DE ARBITRAJE RENTABLE DETECTADA!`);
             console.log(`Beneficio neto esperado: $${profitData.profitUsd.toFixed(2)} (después de todos los costos)`);
             console.log(`Beneficio positivo en tokens: ${ethers.utils.formatUnits(profitData.profitInToken, pair.decimalsA)} ${tokenSymbol}`);
@@ -441,12 +510,9 @@ async function main() {
               console.log(`Ejecutando flash loan para arbitraje entre ${best.dexName} y ${worst.dexName}...`);
               
               // Implementar llamada al contrato de flashloan
-              const tx = await flashLoan.requestFlashLoan(
+              const tx = await flashLoan.executeFlashLoan(
                 pair.tokenA,                // Token a pedir prestado
-                pair.amountIn,              // Cantidad a pedir prestado
-                bestDex,                    // DEX con mejor precio para vender
-                worstDex,                   // DEX con peor precio para comprar
-                ethers.constants.MaxUint256 // Slippage mínimo aceptable
+                pair.amountIn               // Cantidad a pedir prestado
               );
               
               console.log(`Transacción enviada: ${tx.hash}`);
@@ -461,6 +527,8 @@ async function main() {
           } else {
             console.log(`\n❌ NO RENTABLE: El beneficio neto es negativo después de considerar todos los costos.`);
           }
+        } else {
+          console.log(`No hay suficientes DEXes con liquidez para este par.`);
         }
       } catch (error) {
         console.error(`❌ Error verificando par ${pair.tokenA}/${pair.tokenB}:`, error);

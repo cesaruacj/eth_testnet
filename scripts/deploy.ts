@@ -3,25 +3,32 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  // Dirección del PoolAddressesProvider de Aave en ETH Sepolia
-  const addressesProvider: string = "0x012bAC54348C0E635dCAc9D5FB99f06F24136514";
+  // Obtener la dirección correcta del PoolAddressesProvider de Aave v3 en ETH Sepolia
+  const addressesProvider: string = "0x0496275d34753A48320CA58103d5220d394FF77F";
 
-  // Dirección de ArbitrageLogic que ya desplegaste
-  // Aquí tendrías que poner la dirección real de tu contrato ArbitrageLogic desplegado
-  const arbitrageLogicAddress = "0x5Ab5E43a1235fe9C31a616855954317C1d388B3D";
+  // Primero desplegamos el DexAggregator
+  console.log("Desplegando DexAggregator...");
+  const DexAggregator = await ethers.getContractFactory("DexAggregator");
+  const dexAggregator = await DexAggregator.deploy();
+  await dexAggregator.deployed();
+  console.log("DexAggregator desplegado en:", dexAggregator.address);
 
-  // Imprime para debug
-  console.log("Usando PoolAddressesProvider de Ethereum Sepolia:", addressesProvider);
+  // Desplegamos ArbitrageLogic con la dirección del DexAggregator
+  console.log("Desplegando ArbitrageLogic...");
+  const ArbitrageLogic = await ethers.getContractFactory("ArbitrageLogic");
+  const arbitrageLogic = await ArbitrageLogic.deploy(dexAggregator.address);
+  await arbitrageLogic.deployed();
+  console.log("ArbitrageLogic desplegado en:", arbitrageLogic.address);
 
-  // Crea la fábrica del contrato
-  const FlashLoanEthereumSepolia = await ethers.getContractFactory("FlashLoanEthereumSepolia");
-
-  // Despliega el contrato con ambos parámetros
-  const flashLoan = await FlashLoanEthereumSepolia.deploy(addressesProvider, arbitrageLogicAddress);
+  // Desplegamos FlashLoanSepolia con ambos parámetros
+  console.log("Desplegando FlashLoanSepolia...");
+  const FlashLoanSepolia = await ethers.getContractFactory("FlashLoanSepolia");
+  const flashLoan = await FlashLoanSepolia.deploy(addressesProvider, arbitrageLogic.address);
   await flashLoan.deployed();
+  console.log("FlashLoanSepolia desplegado en:", flashLoan.address);
 
-  // Muestra la dirección donde se desplegó el contrato
-  console.log("FlashLoanEthereumSepolia desplegado en:", flashLoan.address);
+  console.log("\nActualiza tu CONFIG con:");
+  console.log(`flashLoanContractAddress: "${flashLoan.address}"`);
 }
 
 // Maneja errores en la ejecución del script
