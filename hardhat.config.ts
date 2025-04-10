@@ -27,16 +27,14 @@ const config: HardhatUserConfig = {
     // Para desarrollo local con fork de Sepolia
     hardhat: {
       forking: {
-        url: SEPOLIA_RPC_URL,
+        url: SEPOLIA_RPC_URL || "",
       },
       chainId: 11155111, // ID de cadena de Sepolia
     },
     // Conexión directa a Sepolia
     sepolia: {
-      url: SEPOLIA_RPC_URL,
-      accounts: [PRIVATE_KEY],
-      chainId: 11155111,
-      gasMultiplier: 1.5,
+      url: "https://eth-sepolia.g.alchemy.com/v2/JDR4rpYy7x_w4r0Z0P5QV9W-f_H7DqZ7",
+      accounts: [`0x${PRIVATE_KEY}`],
     }
   },
   etherscan: {

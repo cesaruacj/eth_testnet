@@ -268,24 +268,15 @@ async function getTokenPrice(
         const quoter = new ethers.Contract(quoterAddress, quoterAbi, provider);
         
         try {
-          // Intentar con quoteExactInputSingle(tuple)
-          const params = {
-            tokenIn: pair.tokenA,
-            tokenOut: pair.tokenB,
-            fee: 3000,
-            amountIn: pair.amountIn,
-            sqrtPriceLimitX96: 0
-          };
-          return await quoter.callStatic.quoteExactInputSingle(params);
-        } catch (innerError) {
-          // Si falla, intentar con parámetros individuales
-          return await quoter.callStatic.quoteExactInputSingle(
-            pair.tokenA,
-            pair.tokenB,
-            3000,
-            pair.amountIn,
-            0
+          // Usar quoteExactInput en vez de quoteExactInputSingle
+          const path = ethers.utils.solidityPack(
+            ['address', 'uint24', 'address'],
+            [pair.tokenA, 3000, pair.tokenB]
           );
+          return await quoter.callStatic.quoteExactInput(path, pair.amountIn);
+        } catch (innerError) {
+          console.log(`UniswapV3: Error con quoteExactInput: ${innerError.message}`);
+          return null;
         }
       } catch (error) {
         console.log(`UniswapV3: Error con el quoter: ${error.message}`);
@@ -300,13 +291,12 @@ async function getTokenPrice(
         const quoterAbi = loadAbi("UniswapV4", "quoter");
         const quoter = new ethers.Contract(quoterAddress, quoterAbi, provider);
         
-        return await quoter.callStatic.quoteExactInputSingle(
-          pair.tokenA,
-          pair.tokenB,
-          3000, // Usar fee tier 0.3%
-          pair.amountIn,
-          0 // Sin limite de precio
+        // Usar quoteExactInput en vez de quoteExactInputSingle
+        const path = ethers.utils.solidityPack(
+          ['address', 'uint24', 'address'],
+          [pair.tokenA, 3000, pair.tokenB]
         );
+        return await quoter.callStatic.quoteExactInput(path, pair.amountIn);
       } catch (error) {
         console.log(`UniswapV4: Error con el quoter: ${error.message}`);
         return null;
