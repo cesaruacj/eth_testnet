@@ -15,16 +15,10 @@ const DEX_ROUTERS = {
   BalancerV2:  "0x5e315f96389C1aaF9324D97d3512ae1e0Bf3C21a"  // Balancer V2 Vault Sepolia
 };
 
-// Definición de pares a monitorear (tokenA, tokenB, monto y decimales)
+// Solo pares con mejor liquidez en Sepolia
 const PAIRS_TO_MONITOR = [
-  { tokenA: TOKENS.UNI,  tokenB: TOKENS.WETH, amountIn: ethers.utils.parseUnits("1000", 18), decimalsA: 18, decimalsB: 18 },
-  { tokenA: TOKENS.YU,   tokenB: TOKENS.WETH, amountIn: ethers.utils.parseUnits("1000", 6),  decimalsA: 6,  decimalsB: 18 },
-  { tokenA: TOKENS.UNI,  tokenB: TOKENS.YU,   amountIn: ethers.utils.parseUnits("1000", 18), decimalsA: 18, decimalsB: 6  },
-  { tokenA: TOKENS.UNI,  tokenB: TOKENS.MON,  amountIn: ethers.utils.parseUnits("1000", 18), decimalsA: 18, decimalsB: 18 },
-  { tokenA: TOKENS.MON,  tokenB: TOKENS.WETH, amountIn: ethers.utils.parseUnits("1000", 18), decimalsA: 18, decimalsB: 18 },
-  { tokenA: TOKENS.MON,  tokenB: TOKENS.YBTC, amountIn: ethers.utils.parseUnits("1000", 18), decimalsA: 18, decimalsB: 8  },
-  { tokenA: TOKENS.YBTC, tokenB: TOKENS.WETH, amountIn: ethers.utils.parseUnits("1000", 8),  decimalsA: 8,  decimalsB: 18 },
-  { tokenA: TOKENS.WETH, tokenB: TOKENS.YBTC, amountIn: ethers.utils.parseUnits("1000", 18), decimalsA: 18, decimalsB: 8  }
+  { tokenA: TOKENS.UNI, tokenB: TOKENS.WETH, amountIn: ethers.utils.parseUnits("100", 18), decimalsA: 18, decimalsB: 18 },
+  { tokenA: TOKENS.WETH, tokenB: TOKENS.YU, amountIn: ethers.utils.parseUnits("0.1", 18), decimalsA: 18, decimalsB: 6 },
 ];
 
 // Función auxiliar: carga el ABI desde la carpeta
@@ -42,18 +36,44 @@ async function getTokenPrice(dexName: string, routerContract: ethers.Contract, p
   try {
     // Caso Uniswap V3: usar el contrato Quoter especial
     if (dexName === 'UniswapV3') {
-      const quoterAddress = "0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3"; // Quoter de Uniswap V3 en Sepolia
-      const quoterAbi = loadAbi("UniswapV3", "quoter");
+      const quoterAddress = "0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3";
+      const quoterAbi = [
+        "function quoteExactInputSingle(tuple(address tokenIn, address tokenOut, uint256 amountIn, uint24 fee, uint160 sqrtPriceLimitX96)) external returns (uint256)"
+      ];
       const quoter = new ethers.Contract(quoterAddress, quoterAbi, routerContract.provider);
-      return await quoter.callStatic.quoteExactInputSingle(pair.tokenA, pair.tokenB, 3000, pair.amountIn, 0);
+
+      // Probar con diferentes fees (500, 3000, 10000)
+      const fees = [500, 3000, 10000];
+      for (const fee of fees) {
+        try {
+          const params = {
+            tokenIn: pair.tokenA,
+            tokenOut: pair.tokenB,
+            amountIn: pair.amountIn,
+            fee: fee,
+            sqrtPriceLimitX96: 0
+          };
+          return await quoter.callStatic.quoteExactInputSingle(params);
+        } catch (error) {
+          console.log(`UniswapV3 (fee ${fee}): Error -> ${error.message}`);
+        }
+      }
+      return null;
     }
     // Caso Uniswap V4: usar contrato Quoter de V4
     if (dexName === 'UniswapV4') {
-      const quoterAddress = "0x61b3f2011a92d183c7dbadbda940a7555ccf9227"; // Quoter de Uniswap V4 en Sepolia
-      const quoterAbi = loadAbi("UniswapV4", "quoter");
-      const quoter = new ethers.Contract(quoterAddress, quoterAbi, routerContract.provider);
-      const path = ethers.utils.solidityPack(['address', 'uint24', 'address'], [pair.tokenA, 3000, pair.tokenB]);
-      return await quoter.callStatic.quoteExactInput(path, pair.amountIn);
+      try {
+        const quoterAddress = "0x61b3f2011a92d183c7dbadbda940a7555ccf9227";
+        const quoterAbi = [
+          "function quoteExactInput(bytes path, uint256 amountIn) external returns (uint256 amountOut)"
+        ];
+        const quoter = new ethers.Contract(quoterAddress, quoterAbi, routerContract.provider);
+        const path = ethers.utils.solidityPack(['address', 'uint24', 'address'], [pair.tokenA, 3000, pair.tokenB]);
+        return await quoter.callStatic.quoteExactInput(path, pair.amountIn);
+      } catch (error) {
+        console.log(`UniswapV4: Error obteniendo precio -> ${error.message}`);
+        return null;
+      }
     }
     // Otros DEX (SushiSwap V2, Balancer, etc.): utilizar la función getAmountsOut si existe
     if (routerContract.interface.functions['getAmountsOut(uint256,address[])']) {
@@ -71,7 +91,7 @@ async function getTokenPrice(dexName: string, routerContract: ethers.Contract, p
 
 async function main() {
   console.log("=== Monitoreo de arbitraje en Ethereum Sepolia (modo solo lectura) ===");
-  const provider = new ethers.providers.JsonRpcProvider("<URL_RPC_Sepolia>");
+  const provider = new ethers.providers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/JDR4rpYy7x_w4r0Z0P5QV9W-f_H7DqZ7");
 
   // Instanciar routers para cada DEX
   const dexRouters: Record<string, ethers.Contract> = {};
@@ -118,8 +138,11 @@ async function main() {
       // Calcular oportunidad
       const profit = bestPrice.sub(worstPrice);
       const profitVal = parseFloat(ethers.utils.formatUnits(profit, pair.decimalsB));
-      if (profitVal > 0) {
-        const profitPct = (profitVal / parseFloat(ethers.utils.formatUnits(worstPrice, pair.decimalsB))) * 100;
+      const profitPct = (profitVal / parseFloat(ethers.utils.formatUnits(worstPrice, pair.decimalsB))) * 100;
+
+      // Detectar oportunidades incluso con pequeños diferenciales
+      const MIN_PROFIT_PERCENT = 0.1; // 0.1%
+      if (profitVal > 0 && profitPct > MIN_PROFIT_PERCENT) {
         console.log(`➡️ Oportunidad detectada: comprar en ${worstDex} y vender en ${bestDex}`);
         console.log(`   Ganancia potencial = ${profitVal.toFixed(4)} ${symB} (${profitPct.toFixed(2)}%)`);
       } else {
@@ -127,7 +150,7 @@ async function main() {
       }
     }
     // Esperar 5 segundos para la siguiente iteración
-    await new Promise(res => setTimeout(res, 5000));
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
 }
 
