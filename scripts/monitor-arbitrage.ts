@@ -14,8 +14,8 @@ const IS_EXECUTION_ENABLED = true;     // Set to false to monitor only or true t
 // Configuración de contratos desplegados
 // ================================
 // Actualiza estas direcciones después de desplegar
-const ARBITRAGE_LOGIC_ADDRESS = "0xc768C2Aab6C8c00cc98FCE13fA7977D6C2723c49"; // ArbitrageLogic.sol contract
-const FLASH_LOAN_CONTRACT_ADDRESS = "0xb175faeF96c605B04F7e59d6FE12e3d419c87896"; // FlashLoanSepolia.sol contract
+const ARBITRAGE_LOGIC_ADDRESS = "0x418f6389008B51E5f658D9Ef4BC73d819904A709"; // ArbitrageLogic.sol contract
+const FLASH_LOAN_CONTRACT_ADDRESS = "0xc012A4f2586d36A80F7d589119c15AAF4A9c8C98"; // FlashLoanSepolia.sol contract
 
 // ABI mínimo para interactuar con tu FlashLoanSepolia
 const flashLoanABI = [
