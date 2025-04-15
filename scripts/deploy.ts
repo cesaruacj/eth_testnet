@@ -2,9 +2,11 @@
 // La sintaxis ya parece ser compatible con ethers v5
 import { ethers } from "hardhat";
 
+const AAVE_PROVIDER_ADDRESS = "0x012b5a383E1c09E2893e6b4bA3B5b936Ad616C9A";
+
 async function main() {
   // Obtener la dirección correcta del PoolAddressesProvider de Aave v3 en ETH Sepolia
-  const addressesProvider: string = "0x0496275d34753A48320CA58103d5220d394FF77F";
+  const addressesProvider: string = AAVE_PROVIDER_ADDRESS;
 
   // Primero desplegamos el DexAggregator
   console.log("Desplegando DexAggregator...");

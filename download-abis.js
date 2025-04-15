@@ -29,14 +29,9 @@ const DEX_CONTRACTS = {
     Factory: '0x0227628f3F023bb0B980b67D528571c95c6DaC1c',
     Quoter: '0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3'
   },
-  UniswapV4: {
-    Router: '0x3a9d48ab9751398bbfa63ad67599bb04e4bdf98b',
-    Factory: '0xE03A1074c86CFeDd5C142C4F04F1a1536e203543',
-    Quoter: '0x61b3f2011a92d183c7dbadbda940a7555ccf9227'
-  },
-  BalancerV2: {
-    Router: '0x5e315f96389C1aaF9324D97d3512ae1e0Bf3C21a',
-    Factory: '0x7532d5a3bE916e4a4D900240F49F0BABd4FD855C'
+  UniswapV2: {
+    Router: '0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3',
+    Factory: '0xF62c03E08ada871A0bEb309762E260a7a6a880E6',
   },
 };
 
