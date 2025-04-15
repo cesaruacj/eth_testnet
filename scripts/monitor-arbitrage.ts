@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import * as dotenv from "dotenv";
-import { AaveSepoliaAddresses } from "./aaveAddresses";
+import { TOKENS, DEX_ROUTERS, FACTORIES, POOLS, DEPLOYED_CONTRACTS, FEE_TIERS } from "./sepoliaAddresses";
 dotenv.config();
 
 // ================================
@@ -14,8 +14,8 @@ const IS_EXECUTION_ENABLED = true;     // Set to false to monitor only or true t
 // Configuración de contratos desplegados
 // ================================
 // Actualiza estas direcciones después de desplegar
-const ARBITRAGE_LOGIC_ADDRESS = "0x418f6389008B51E5f658D9Ef4BC73d819904A709"; // ArbitrageLogic.sol contract
-const FLASH_LOAN_CONTRACT_ADDRESS = "0xc012A4f2586d36A80F7d589119c15AAF4A9c8C98"; // FlashLoanSepolia.sol contract
+const ARBITRAGE_LOGIC_ADDRESS = DEPLOYED_CONTRACTS.ARBITRAGE_LOGIC; // ArbitrageLogic.sol contract
+const FLASH_LOAN_CONTRACT_ADDRESS = DEPLOYED_CONTRACTS.FLASH_LOAN; // FlashLoanSepolia.sol contract
 
 // ABI mínimo para interactuar con tu FlashLoanSepolia
 const flashLoanABI = [
@@ -26,15 +26,15 @@ const flashLoanABI = [
 // Configuración de tokens en Sepolia (direcciones validadas)
 // ================================
 // Principales tokens base
-const USDC = "0x94a9d9ac8a22534e3faca9f4e7f2e2cf85d5e4c8"; // USDC testnet (6 decimales)
-const WETH = "0xfff9976782d46cc05630d1f6ebab18b2324d6b14"; // WETH testnet (18 decimales)
-const WBTC = "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063"; // Wrapped BTC (8 decimales)
+const USDC = TOKENS.USDC; // USDC testnet (6 decimales)
+const WETH = TOKENS.WETH; // WETH testnet (18 decimales)
+const WBTC = TOKENS.WBTC; // Wrapped BTC (8 decimales)
 
 // Tokens adicionales con alta liquidez en Sepolia (top de GeckoTerminal)
-const METH = "0x42f8393922062fe7b07929b77c68eb7344375fa8"; // METH testnet (18 decimales)
-const UNI = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"; // Uniswap token (18 decimales)
-const LINK = "0x779877a7b0d9e8603169ddbd7836e478b4624789"; // Chainlink token (18 decimales)
-const DAI = "0x73967c6a0904aa032c103b4104747e88c566b1a2"; // DAI Stablecoin (18 decimales)
+const METH = TOKENS.METH; // METH testnet (18 decimales)
+const UNI = TOKENS.UNI; // Uniswap token (18 decimales)
+const LINK = TOKENS.LINK; // Chainlink token (18 decimales)
+const DAI = TOKENS.DAI; // DAI Stablecoin (18 decimales)
 
 // ================================
 // Inicialización del proveedor
@@ -57,24 +57,23 @@ const wallet = PRIVATE_KEY ? new ethers.Wallet(PRIVATE_KEY, provider) : null;  /
 // ================================
 // Configuración de DEXes en Sepolia
 // ================================
-const SUSHI_V2_ROUTER = "0xeabce3e74ef41fb40024a21cc2ee2f5ddc615791";
-const UNISWAP_V2_ROUTER = "0xee567fe1712faf6149d80da1e6934e354124cfe3";
-const UNISWAP_V3_QUOTER = "0xed1f6473345f45b75f8179591dd5ba1888cf2fb3";
+const SUSHI_V2_ROUTER = DEX_ROUTERS.SUSHI_V2;
+const UNISWAP_V2_ROUTER = DEX_ROUTERS.UNISWAP_V2;
+const UNISWAP_V3_QUOTER = DEX_ROUTERS.UNISWAP_V3_QUOTER;
 
 // ================================
 // Pools específicos con alta liquidez (Top de GeckoTerminal)
 // ================================
-// Uniswap V3 - Top Pools
-const UNIV3_WETH_USDC_POOL = "0x84f491dd1e1bb2b251bea2cab9ac6849e94bfbc5";
-const UNIV3_WETH_WBTC_POOL = "0x5efaa00432c51aa1c51d3eb66b8f8e9e704d6bb3";
-const UNIV3_WETH_DAI_POOL = "0xe05b4b02a202cfa6b6805c5e1716e4f45c3b8c48";
-const UNIV3_WETH_UNI_POOL = "0xbcf67b1fe93d540774a73ef88189e3a37dede17c";
-const UNIV3_WETH_LINK_POOL = "0x9b7e29ad4387a89261cba7919861d42ab204627b";
+// Uniswap V3 - Pools
+const UNIV3_WETH_USDC_POOL = POOLS.UNIV3_WETH_USDC;
+const UNIV3_WETH_DAI_POOL = POOLS.UNIV3_WETH_DAI;
+const UNIV3_WETH_UNI_POOL = POOLS.UNIV3_WETH_UNI;
+const UNIV3_WETH_LINK_POOL = POOLS.UNIV3_WETH_LINK;
 
-// Uniswap V2 - Top Pools
-const UNIV2_WETH_USDC_POOL = "0x2fb2d3eb1f38621b6b04ab10d82481acd6386d6f";
-const UNIV2_WETH_UNI_POOL = "0x02ccba622d7af52a44df11d268ce67e6cb326dcf";
-const UNIV2_WETH_DAI_POOL = "0x56c0fa47107bf25aa0d5c20452ed0339fae75ed4";
+// Uniswap V2 - Pools
+const UNIV2_WETH_USDC_POOL = POOLS.UNIV2_WETH_USDC;
+const UNIV2_WETH_UNI_POOL = POOLS.UNIV2_WETH_UNI;
+const UNIV2_WETH_DAI_POOL = POOLS.UNIV2_WETH_DAI;
 
 // ================================
 // ABIs mínimos para funciones de cotización
@@ -121,9 +120,9 @@ const amountInLINK = ethers.utils.parseUnits("10", 18);      // 10 LINK (18 deci
 const amountInDAI = ethers.utils.parseUnits("1000", 18);     // 1000 DAI (18 decimales)
 
 // Definir fee tiers para Uniswap V3
-const FEE_LOW = 500;       // 0.05% 
-const FEE_MEDIUM = 3000;   // 0.3% - Este tier tiene más liquidez en Sepolia
-const FEE_HIGH = 10000;    // 1%
+const FEE_LOW = FEE_TIERS.LOW;       // 0.05% 
+const FEE_MEDIUM = FEE_TIERS.MEDIUM;   // 0.3% - Este tier tiene más liquidez en Sepolia
+const FEE_HIGH = FEE_TIERS.HIGH;    // 1%
 
 // Variable global para almacenar los fee tiers descubiertos
 let discoveredFeeTiers = {};
@@ -247,7 +246,7 @@ function isPoolBalanced(reserve0, reserve1, decimals0, decimals1) {
   // Por ejemplo, si ETH vale ~3000 USDC
   let targetRatio;
   if (decimals0 === 6 && decimals1 === 18) { // USDC/ETH
-    targetRatio = 3000; // Esperamos ~3000 USDC por ETH
+    targetRatio = 1700; // Esperamos ~1700 USDC por 1 ETH
   } else {
     targetRatio = 1; // Por defecto
   }
@@ -453,8 +452,7 @@ function findMultiHopOpportunities(results) {
 async function discoverV3PoolFeeTiers() {
   console.log("\n🔍 Descubriendo fee tiers de pools UniswapV3...");
   
-  const V3_FACTORY = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
-  const factory = new ethers.Contract(V3_FACTORY, factoryV3ABI, provider);
+  const factory = new ethers.Contract(FACTORIES.UNISWAP_V3, factoryV3ABI, provider);
   const feeTiers = [100, 500, 3000, 10000]; // 0.01%, 0.05%, 0.3%, 1%
   
   // Mapeo para almacenar los fee tiers descubiertos
@@ -508,10 +506,47 @@ async function discoverV3PoolFeeTiers() {
 // ================================
 // Función para verificar viabilidad del flash loan antes de ejecutarlo
 // ================================
-// ❌ Esta función hace bypass completo de seguridad - intencional para pruebas
 async function verifyFlashLoanSafety(tokenAddress, amount, decimals) {
-  console.log("⚠️ MODO BYPASS: Omitiendo todas las verificaciones de seguridad");
-  return true;
+  try {
+    // Add this debug line
+    console.log(`Verificando token: ${tokenAddress} (USDC address: ${USDC})`);
+    
+    // Force approve USDC for testing - Keep this simple check
+    if (tokenAddress.toLowerCase() === USDC.toLowerCase()) {
+      console.log(`✅ USDC aprobado para flash loan`);
+      return true;
+    }
+    
+    // Permitir todos los tokens configurados en el script
+    if (tokenAddress.toLowerCase() === USDC.toLowerCase() || 
+        tokenAddress.toLowerCase() === WETH.toLowerCase() || 
+        tokenAddress.toLowerCase() === WBTC.toLowerCase() || 
+        tokenAddress.toLowerCase() === METH.toLowerCase() || 
+        tokenAddress.toLowerCase() === UNI.toLowerCase() || 
+        tokenAddress.toLowerCase() === LINK.toLowerCase() || 
+        tokenAddress.toLowerCase() === DAI.toLowerCase()) {
+      
+      // Determinar el símbolo del token para mostrar en el log
+      let tokenSymbol = "Unknown";
+      if (tokenAddress.toLowerCase() === USDC.toLowerCase()) tokenSymbol = "USDC";
+      else if (tokenAddress.toLowerCase() === WETH.toLowerCase()) tokenSymbol = "WETH";
+      else if (tokenAddress.toLowerCase() === WBTC.toLowerCase()) tokenSymbol = "WBTC";
+      else if (tokenAddress.toLowerCase() === METH.toLowerCase()) tokenSymbol = "METH";
+      else if (tokenAddress.toLowerCase() === UNI.toLowerCase()) tokenSymbol = "UNI";
+      else if (tokenAddress.toLowerCase() === LINK.toLowerCase()) tokenSymbol = "LINK";
+      else if (tokenAddress.toLowerCase() === DAI.toLowerCase()) tokenSymbol = "DAI";
+      
+      console.log(`✅ Token ${tokenSymbol} aprobado para flash loan`);
+      return true;
+    }
+    
+    // Si el token no está en nuestra lista de tokens configurados
+    console.log(`❌ Token no reconocido (${tokenAddress}) - No se considera seguro para flash loan`);
+    return false;
+  } catch (error) {
+    console.error(`Error verificando seguridad: ${error.message}`);
+    return false;
+  }
 }
 
 // ================================
@@ -655,6 +690,18 @@ async function monitor() {
 
         console.log("\n=================== ANÁLISIS DE ARBITRAJE ===================");
         
+        // Analizar par DAI/WETH - PRIMERO
+        console.log("\n📊 ANÁLISIS PAR DAI/WETH:");
+        const daiEntries = Object.entries(results.dai_weth).filter(([_, price]) => !isNaN(price));
+        const daiPoolInfo = await checkPoolReserves(UNIV2_WETH_DAI_POOL, "DAI", "WETH", 18, 18, amountInDAI, "DAI");
+        analyzeArbitrage(daiEntries, "DAI", "WETH", "1000", daiPoolInfo);
+        
+        // Analizar par WETH/DAI - SEGUNDO (dirección inversa)
+        console.log("\n📊 ANÁLISIS PAR WETH/DAI:");
+        const wethToDaiEntries = Object.entries(results.dai_weth).filter(([_, price]) => !isNaN(price))
+          .map(([dex, price]) => [dex, 1/price]); // Invertir el precio
+        analyzeArbitrage(wethToDaiEntries, "WETH", "DAI", "1");
+
         // Analizar par USDC/WETH
         console.log("\n📊 ANÁLISIS PAR USDC/WETH:");
         const usdcEntries = Object.entries(results.usdc_weth).filter(([_, price]) => !isNaN(price));
