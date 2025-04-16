@@ -107,6 +107,10 @@ contract ArbitrageLogic is ReentrancyGuard {
             // This code will never execute, but prevents the unused variable warning
             revert("Price should not be zero");
         }
+
+        // After completing trades - transfer ALL tokens back to repay flash loan
+        uint256 currentBalance = IERC20(tokenIn).balanceOf(address(this));
+        IERC20(tokenIn).transfer(msg.sender, currentBalance);
     }
     
     /**
