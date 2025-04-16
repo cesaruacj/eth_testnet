@@ -22,7 +22,7 @@ const ETHERSCAN_API = network === "sepolia" ? 'https://api-sepolia.etherscan.io/
 const DEX_CONTRACTS = {
   SushiSwapV2: {
     Router: '0xeaBcE3E74EF41FB40024a21Cc2ee2F5dDc615791',
-    Factory: '0x734583f62Bb6ACe3c9bA9bd5A53143CA2Ce8C55A'
+    Factory: '0xc35DADB65012eC5796536bD9864eD8773aBc74C4'
   },
   UniswapV3: {
     Router: '0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E',
@@ -31,7 +31,7 @@ const DEX_CONTRACTS = {
   },
   UniswapV2: {
     Router: '0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3',
-    Factory: '0xF62c03E08ada871A0bEb309762E260a7a6a880E6',
+    Factory: '0xee567fe1712faf6149d80da1e6934e354124cfe3',
   },
 };
 

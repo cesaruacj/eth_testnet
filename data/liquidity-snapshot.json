@@ -1,0 +1,321 @@
+{
+  "UNIV3_METH_WETH": {
+    "address": "0x84f491dd1e1bb2b251bea2cab9ac6849e94bfbc5",
+    "type": "V3",
+    "token0": {
+      "address": "0x4f7A67464B5976d7547c860109e4432d50AfB38e",
+      "symbol": "WETH_ALT"
+    },
+    "token1": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "symbol": "WETH"
+    },
+    "liquidity": "106887207008320389210",
+    "sqrtPriceX96": "8855347967578613461976661293354",
+    "tick": 94333,
+    "fee": 3000,
+    "timestamp": 1744839644
+  },
+  "UNIV3_YU_YBTC": {
+    "address": "0xc0b6f0c5d4c33c59b4672000d490992b7097ba40",
+    "type": "V3",
+    "token0": {
+      "address": "0xBBd3EDd4D3b519c0d14965d9311185CFaC8c3220",
+      "symbol": "YBTC"
+    },
+    "token1": {
+      "address": "0xe0232D625Ea3B94698F0a7DfF702931B704083c9",
+      "symbol": "YU"
+    },
+    "liquidity": "316034706477356703140817",
+    "sqrtPriceX96": "21862786281474588541614574470020",
+    "tick": 112409,
+    "fee": 3000,
+    "timestamp": 1744839644
+  },
+  "UNIV3_USDC_WETH": {
+    "address": "0x3289680dd4d6c10bb19b899729cda5eef58aeff1",
+    "type": "V3",
+    "token0": {
+      "address": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "symbol": "USDC_V3"
+    },
+    "token1": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "symbol": "WETH"
+    },
+    "liquidity": "12756369259030114",
+    "sqrtPriceX96": "886780139337046310839473542595122",
+    "tick": 186469,
+    "fee": 500,
+    "timestamp": 1744839644
+  },
+  "UNIV3_MON_WETH": {
+    "address": "0xfac1138c5a426d26a6e350868eee6501788f1417",
+    "type": "V3",
+    "token0": {
+      "address": "0x810A3B22c91002155d305C4Ce032978E3A97F8c4",
+      "symbol": "MON"
+    },
+    "token1": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "symbol": "WETH"
+    },
+    "liquidity": "6012555999846891616255",
+    "sqrtPriceX96": "36717571070005705745317709158",
+    "tick": -15383,
+    "fee": 10000,
+    "timestamp": 1744839644
+  },
+  "UNIV3_UNI_WETH": {
+    "address": "0x287b0e934ed0439e2a7b1d5f0fc25ea2c24b64f7",
+    "type": "V3",
+    "token0": {
+      "address": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+      "symbol": "UNI"
+    },
+    "token1": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "symbol": "WETH"
+    },
+    "liquidity": "194635942001940298536",
+    "sqrtPriceX96": "443978689144041766225284135859",
+    "tick": 34470,
+    "fee": 3000,
+    "timestamp": 1744839644
+  },
+  "UNIV3_USDT_WETH": {
+    "address": "0x58d850667c47981a1b6e7ca0b8dc2eb937cd4119",
+    "type": "V3",
+    "token0": {
+      "address": "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0",
+      "symbol": "USDT"
+    },
+    "token1": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "symbol": "WETH"
+    },
+    "liquidity": "1759557593649479",
+    "sqrtPriceX96": "17821844548739070908994029957094",
+    "tick": 108322,
+    "fee": 10000,
+    "timestamp": 1744839644
+  },
+  "UNIV3_USDC_UNI": {
+    "address": "0x294a263412d5be965b45bd93121ca58813f68b07",
+    "type": "V3",
+    "token0": {
+      "address": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "symbol": "USDC_V3"
+    },
+    "token1": {
+      "address": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+      "symbol": "UNI"
+    },
+    "liquidity": "36956531233810",
+    "sqrtPriceX96": "158763868849547199822545436595436",
+    "tick": 152064,
+    "fee": 100,
+    "timestamp": 1744839644
+  },
+  "UNIV3_LINK_WETH": {
+    "address": "0xa470a353577901aa8cdcb828bb616ef41d58b88a",
+    "type": "V3",
+    "token0": {
+      "address": "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+      "symbol": "LINK"
+    },
+    "token1": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "symbol": "WETH"
+    },
+    "liquidity": "129920445945370063762",
+    "sqrtPriceX96": "770288943925160648958548235",
+    "tick": -92672,
+    "fee": 10000,
+    "timestamp": 1744839644
+  },
+  "UNIV3_QRT_WETH": {
+    "address": "0xf474cca17c97b7662724293edd19cfe4cdd32fab",
+    "type": "V3",
+    "token0": {
+      "address": "0xbcA260191A7a39512dE6488C7ee5ad8dff8A766B",
+      "symbol": "QRT"
+    },
+    "token1": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "symbol": "WETH"
+    },
+    "liquidity": "26820954063262",
+    "sqrtPriceX96": "6351724916859340128602377377712056",
+    "tick": 225849,
+    "fee": 3000,
+    "timestamp": 1744839644
+  },
+  "UNIV3_YU_WETH": {
+    "address": "0xfb01246458819bac2014eff039772ae6c4095817",
+    "type": "V3",
+    "token0": {
+      "address": "0xcB856bC5Aa2664E47c9caDce6fF65117c5201a1C",
+      "symbol": "0xcB856bC5Aa2664E47c9caDce6fF65117c5201a1C"
+    },
+    "token1": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "symbol": "WETH"
+    },
+    "liquidity": "282370325269458450677",
+    "sqrtPriceX96": "254713898802769996594085469",
+    "tick": -114805,
+    "fee": 10000,
+    "timestamp": 1744839644
+  },
+  "UNIV2_DAI_WETH": {
+    "address": "0x2fb2d3eb1f38621b6b04ab10d82481acd6386d6f",
+    "type": "V2",
+    "token0": {
+      "address": "0xB4F1737Af37711e9A5890D9510c9bB60e170CB0D",
+      "symbol": "DAI",
+      "reserve": "422485906386239122833883"
+    },
+    "token1": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "symbol": "WETH",
+      "reserve": "422327737860736778415"
+    },
+    "timestamp": 1744839644
+  },
+  "UNIV2_COW_WETH": {
+    "address": "0x7f12d41b598025f1ed99bc7c0d1255a319342855",
+    "type": "V2",
+    "token0": {
+      "address": "0x0625aFB445C3B6B7B929342a04A22599fd5dBB59",
+      "symbol": "COW",
+      "reserve": "42496695479596010441430"
+    },
+    "token1": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "symbol": "WETH",
+      "reserve": "118127514283126533613"
+    },
+    "timestamp": 1744839644
+  },
+  "UNIV2_USDC_WETH": {
+    "address": "0x92b8274aba7ab667bee7eb776ec1de32438d90bf",
+    "type": "V2",
+    "token0": {
+      "address": "0xbe72E441BF55620febc26715db68d3494213D8Cb",
+      "symbol": "USDC",
+      "reserve": "90887501425063279494615"
+    },
+    "token1": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "symbol": "WETH",
+      "reserve": "364216084318288745452"
+    },
+    "timestamp": 1744839644
+  },
+  "UNIV2_USDT_WETH": {
+    "address": "0x2bff913fc4c78969bbe0ecd368e893ff23c2ed3c",
+    "type": "V2",
+    "token0": {
+      "address": "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0",
+      "symbol": "USDT",
+      "reserve": "35694503849"
+    },
+    "token1": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "symbol": "WETH",
+      "reserve": "87307383880199488"
+    },
+    "timestamp": 1744839644
+  },
+  "AAVE_V3": {
+    "poolAddress": "0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951",
+    "poolAddressProvider": "0x012bAC54348C0E635dCAc9D5FB99f06F24136C9A",
+    "type": "AAVE_V3",
+    "reserves": {
+      "DAI_AAVE": {
+        "address": "0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357",
+        "liquidityIndex": "1581651276652677468309819033",
+        "currentLiquidityRate": "640149755124941315573961668",
+        "variableBorrowRate": "724969357886909910771929136",
+        "stableBorrowRate": "739969357886909910771929136",
+        "aTokenAddress": "0x29598b72eb5CeBd806C5dCD549490FdA35B13cD8",
+        "lastUpdateTimestamp": "1744838604"
+      },
+      "LINK_AAVE": {
+        "address": "0xf8Fb3713D459D7C1018BD0A49D19b4C44290EBE5",
+        "liquidityIndex": "2520865505282255030440195950",
+        "currentLiquidityRate": "1662220693284155314022725762",
+        "variableBorrowRate": "2379118761342592749121128706",
+        "stableBorrowRate": "2469118761342592749121128706",
+        "aTokenAddress": "0x3FfAf50D4F4E96eB78f2407c090b72e86eCaed24",
+        "lastUpdateTimestamp": "1744838808"
+      },
+      "USDC_AAVE": {
+        "address": "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
+        "liquidityIndex": "1342403349283596370651622789",
+        "currentLiquidityRate": "101651750558834786216155304",
+        "variableBorrowRate": "123549204407339114763936586",
+        "stableBorrowRate": "138549204407339114763936586",
+        "aTokenAddress": "0x16dA4541aD1807f4443d92D26044C1147406EB80",
+        "lastUpdateTimestamp": "1744837944"
+      },
+      "0x29f2D40B0605204364af54EC677bD022dA425d03": {
+        "address": "0x29f2D40B0605204364af54EC677bD022dA425d03",
+        "liquidityIndex": "1000156538024243945201502391",
+        "currentLiquidityRate": "793952256438964112769",
+        "variableBorrowRate": "392911701809309143837091",
+        "stableBorrowRate": "90392911701809309143837091",
+        "aTokenAddress": "0x1804Bf30507dc2EB3bDEbbbdd859991EAeF6EefF",
+        "lastUpdateTimestamp": "1744834296"
+      },
+      "WETH_AAVE": {
+        "address": "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c",
+        "liquidityIndex": "1000041715613259157593927094",
+        "currentLiquidityRate": "0",
+        "variableBorrowRate": "0",
+        "stableBorrowRate": "90000000000000000000000000",
+        "aTokenAddress": "0x5b071b590a59395fE4025A0Ccc1FcC931AAc1830",
+        "lastUpdateTimestamp": "1744837788"
+      },
+      "USDT": {
+        "address": "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0",
+        "liquidityIndex": "1650616607385550561591812015",
+        "currentLiquidityRate": "466605579933344239137629517",
+        "variableBorrowRate": "528401105558090357753075020",
+        "stableBorrowRate": "543401105558090357753075020",
+        "aTokenAddress": "0xAF0F6e8b0Dc5c913bbF4d14c22B4E78Dd14310B6",
+        "lastUpdateTimestamp": "1744838760"
+      },
+      "0x88541670E55cC00bEEFD87eB59EDd1b7C511AC9a": {
+        "address": "0x88541670E55cC00bEEFD87eB59EDd1b7C511AC9a",
+        "liquidityIndex": "1000010285147408518446004372",
+        "currentLiquidityRate": "0",
+        "variableBorrowRate": "0",
+        "stableBorrowRate": "90000000000000000000000000",
+        "aTokenAddress": "0x6b8558764d3b7572136F17174Cb9aB1DDc7E1259",
+        "lastUpdateTimestamp": "1744777284"
+      },
+      "0x6d906e526a4e2Ca02097BA9d0caA3c382F52278E": {
+        "address": "0x6d906e526a4e2Ca02097BA9d0caA3c382F52278E",
+        "liquidityIndex": "1158486242935491199711073841",
+        "currentLiquidityRate": "520361196956188916987665269",
+        "variableBorrowRate": "589065400166939514966775984",
+        "stableBorrowRate": "604065400166939514966775984",
+        "aTokenAddress": "0xB20691021F9AcED8631eDaa3c0Cd2949EB45662D",
+        "lastUpdateTimestamp": "1744707828"
+      },
+      "0xc4bF5CbDaBE595361438F8c6a187bDc330539c60": {
+        "address": "0xc4bF5CbDaBE595361438F8c6a187bDc330539c60",
+        "liquidityIndex": "1000000000000000000000000000",
+        "currentLiquidityRate": "0",
+        "variableBorrowRate": "20000000000000000000000000",
+        "stableBorrowRate": "0",
+        "aTokenAddress": "0xd190eF37dB51Bb955A680fF1A85763CC72d083D4",
+        "lastUpdateTimestamp": "1744707900"
+      }
+    },
+    "timestamp": 1744839644
+  }
+}

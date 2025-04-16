@@ -1,5 +1,7 @@
 import { ethers } from "ethers";
 import * as dotenv from "dotenv";
+import * as fs from "fs";
+import * as path from "path";
 import { TOKENS, DEX_ROUTERS, FACTORIES, POOLS, DEPLOYED_CONTRACTS, FEE_TIERS, AAVE_TOKENS } from "./sepoliaAddresses";
 dotenv.config();
 
@@ -20,6 +22,16 @@ const USDT = TOKENS.USDT;
 // Add this near the top of your file with other variable declarations
 let consecutiveFailures = 0;
 
+// Carga los datos de liquidez del archivo JSON
+let liquidityData = {};
+try {
+  const dataPath = path.join(__dirname, "../data/liquidity-snapshot.json");
+  liquidityData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+  console.log(`✅ Datos de liquidez cargados de ${dataPath}`);
+} catch (error) {
+  console.error(`❌ Error cargando datos de liquidez: ${error.message}`);
+}
+
 // Add a list of tokens with known good Aave liquidity on Sepolia
 const TOKENS_WITH_AAVE_LIQUIDITY = ["DAI", "USDC", "WETH"]; // Based on testing
 
@@ -27,7 +39,7 @@ const TOKENS_WITH_AAVE_LIQUIDITY = ["DAI", "USDC", "WETH"]; // Based on testing
 // Configuration
 // ================================
 const MIN_PROFIT_PERCENT = 0.1;  // Execute any trade with >0.1% profit
-const MAX_SLIPPAGE_PERCENT = 5;      // Lower to prevent massive slippage
+const MAX_SLIPPAGE_PERCENT = 3;      // Lower to prevent massive slippage
 let IS_EXECUTION_ENABLED = true;     // Set to false to monitor only or true to execute arbitrage
 
 // ================================
@@ -160,13 +172,13 @@ const uniV3Quoter = new ethers.Contract(UNISWAP_V3_QUOTER, quoterV3ABI, provider
 // Montos de prueba para cada token
 // ================================
 // Montos estándar para cotizaciones (ajustados según los decimales de cada token)
-const amountInUSDC = ethers.utils.parseUnits("1000", 6);    // 1000 USDC (6 decimales)
-const amountInWETH = ethers.utils.parseUnits("1", 18);       // 1 WETH (18 decimales)
-const amountInYBTC = ethers.utils.parseUnits("0.05", 8);     // 0.05 YBTC (8 decimales)
-const amountInMETH = ethers.utils.parseUnits("1", 18);       // 1 METH (18 decimales)
-const amountInUNI = ethers.utils.parseUnits("10", 18);       // 10 UNI (18 decimales)
+const amountInUSDC = ethers.utils.parseUnits("500", 6);    // 500 USDC (6 decimales)
+const amountInWETH = ethers.utils.parseUnits("0.5", 18);       // 0.5 WETH (18 decimales)
+const amountInYBTC = ethers.utils.parseUnits("0.025", 8);     // 0.025 YBTC (8 decimales)
+const amountInMETH = ethers.utils.parseUnits("0.5", 18);       // 0.5 METH (18 decimales)
+const amountInUNI = ethers.utils.parseUnits("5", 18);       // 5 UNI (18 decimales)
 const amountInLINK = ethers.utils.parseUnits("5", 18);      // 5 LINK (18 decimales)
-const amountInDAI = ethers.utils.parseUnits("1000", 18);     // 1000 DAI (18 decimales)
+const amountInDAI = ethers.utils.parseUnits("500", 18);     // 500 DAI (18 decimales)
 
 // Definir fee tiers para Uniswap V3
 const FEE_LOW = FEE_TIERS.LOW;       // 0.05% 
@@ -256,25 +268,25 @@ function getDecimals(symbol) {
 }
 
 // ================================
-// Consultar reservas de un pool V2 específico
+// Consultar reservas de un pool V2 usando datos del snapshot
 // ================================
-async function checkPoolReserves(poolAddress, symbol0, symbol1, decimals0, decimals1, amountToSwap, swapSymbol) {
+function checkPoolReservesFromSnapshot(poolAddress, symbol0, symbol1, decimals0, decimals1, amountToSwap, swapSymbol) {
   try {
-    const pairContract = new ethers.Contract(poolAddress, pairABI, provider);
+    // Obtener información del pool desde el archivo de liquidez
+    const poolData = liquidityData[getPoolKeyByAddress(poolAddress)];
     
-    // Obtener tokens del pool para verificar el orden
-    const token0 = await pairContract.token0();
-    const token1 = await pairContract.token1();
+    if (!poolData || poolData.type !== "V2") {
+      console.log(`Pool V2 ${poolAddress} no encontrado en snapshot o no es tipo V2`);
+      return null;
+    }
     
-    // Obtener reservas
-    const reserves = await pairContract.getReserves();
-    console.log(`Pool V2 ${symbol0}/${symbol1} Reserves: ${ethers.utils.formatUnits(reserves[0], decimals0)} ${symbol0}, ${ethers.utils.formatUnits(reserves[1], decimals1)} ${symbol1}`);
+    // Extraer reservas del snapshot
+    const reserve0 = parseFloat(ethers.utils.formatUnits(poolData.token0.reserve, decimals0));
+    const reserve1 = parseFloat(ethers.utils.formatUnits(poolData.token1.reserve, decimals1));
+    
+    console.log(`Pool V2 ${symbol0}/${symbol1} Reserves (from snapshot): ${reserve0} ${symbol0}, ${reserve1} ${symbol1}`);
     
     // Calcular proporción de precios implícita
-    const reserve0 = parseFloat(ethers.utils.formatUnits(reserves[0], decimals0));
-    const reserve1 = parseFloat(ethers.utils.formatUnits(reserves[1], decimals1));
-    
-    // Calcular precio basado en reservas
     const price01 = reserve1 / reserve0; // Price of token0 in terms of token1
     const price10 = reserve0 / reserve1; // Price of token1 in terms of token0
     
@@ -292,9 +304,64 @@ async function checkPoolReserves(poolAddress, symbol0, symbol1, decimals0, decim
       console.log(`Expected slippage for ${swapAmount} ${symbol1} swap: ~${expectedSlippage.toFixed(2)}%`);
     }
     
-    return { token0, token1, reserve0, reserve1, price01, price10 };
+    return { 
+      token0: poolData.token0.address, 
+      token1: poolData.token1.address, 
+      reserve0, 
+      reserve1, 
+      price01, 
+      price10 
+    };
   } catch (error) {
-    console.log(`Error checking pool reserves for ${poolAddress}: ${error.message}`);
+    console.log(`Error checking pool reserves from snapshot for ${poolAddress}: ${error.message}`);
+    return null;
+  }
+}
+
+// Helper para encontrar la key del pool por su dirección
+function getPoolKeyByAddress(address) {
+  for (const [key, value] of Object.entries(POOLS)) {
+    if (value.toLowerCase() === address.toLowerCase()) {
+      return key;
+    }
+  }
+  return null;
+}
+
+// ================================
+// Consultar liquidez de un pool V3 usando datos del snapshot
+// ================================
+function checkPoolLiquidityFromSnapshot(poolAddress) {
+  try {
+    // Obtener información del pool desde el archivo de liquidez
+    const poolKey = getPoolKeyByAddress(poolAddress);
+    const poolData = liquidityData[poolKey];
+    
+    if (!poolData || poolData.type !== "V3") {
+      console.log(`Pool V3 ${poolAddress} no encontrado en snapshot o no es tipo V3`);
+      return null;
+    }
+    
+    const symbol0 = poolData.token0.symbol;
+    const symbol1 = poolData.token1.symbol;
+    const liquidity = poolData.liquidity;
+    const fee = poolData.fee;
+    const tick = poolData.tick;
+    
+    console.log(`Pool V3 ${symbol0}/${symbol1} (fee: ${fee/10000}%)`);
+    console.log(`  Liquidity: ${ethers.utils.formatEther(liquidity)} units`);
+    console.log(`  Current tick: ${tick}`);
+    
+    return {
+      token0: poolData.token0.address,
+      token1: poolData.token1.address,
+      liquidity,
+      fee,
+      tick,
+      sqrtPriceX96: poolData.sqrtPriceX96
+    };
+  } catch (error) {
+    console.log(`Error checking pool liquidity from snapshot for ${poolAddress}: ${error.message}`);
     return null;
   }
 }
@@ -357,35 +424,108 @@ async function getPrices() {
   const wethForDai = await queryTokenPair(DAI, WETH, amountInDAI, "DAI", "WETH", 18);
   results.dai_weth = wethForDai;
   
-  // ===== Check pool reserves for major pools =====
-  console.log("\n===== VERIFICANDO RESERVES DE POOLS PRINCIPALES =====");
-  await checkPoolReserves(UNIV2_WETH_USDC_POOL, "USDC", "WETH", 6, 18, amountInUSDC, "USDC");
+  // ===== Check pool reserves for major pools usando snapshot =====
+  console.log("\n===== VERIFICANDO RESERVES DE POOLS PRINCIPALES (DESDE SNAPSHOT) =====");
+  
+  // Verificar pools V2
+  checkPoolReservesFromSnapshot(UNIV2_WETH_USDC_POOL, "USDC", "WETH", 6, 18, amountInUSDC, "USDC");
+  checkPoolReservesFromSnapshot(UNIV2_WETH_DAI_POOL, "DAI", "WETH", 18, 18, amountInDAI, "DAI"); 
+  checkPoolReservesFromSnapshot(UNIV2_WETH_COW_POOL, "COW", "WETH", 18, 18, ethers.utils.parseUnits("10", 18), "COW");
+  
+  // Verificar pools V3
+  console.log("\n===== VERIFICANDO LIQUIDEZ DE POOLS V3 (DESDE SNAPSHOT) =====");
+  checkPoolLiquidityFromSnapshot(UNIV3_WETH_USDC_POOL);
+  checkPoolLiquidityFromSnapshot(UNIV3_WETH_UNI_POOL);
+  checkPoolLiquidityFromSnapshot(UNIV3_WETH_LINK_POOL);
   
   return results;
 }
 
 // ================================
-// Función para descubrir fee tiers de UniswapV3
+// Función para descubrir fee tiers de UniswapV3 desde el snapshot
 // ================================
-async function discoverV3PoolFeeTiers() {
-  console.log("\n🔍 Usando fee tiers conocidos para pools UniswapV3...");
+function getV3PoolFeeTiersFromSnapshot() {
+  console.log("\n🔍 Cargando fee tiers de UniswapV3 desde snapshot...");
   
   const discoveredFeeTiers = {};
   
-  // Mapear directamente los pares de tokens a sus fees conocidos
-  discoveredFeeTiers[`${TOKENS_V3.USDC}_${TOKENS_V3.WETH}`] = 500;     // USDC/WETH = 0.05%
-  discoveredFeeTiers[`${TOKENS_V3.MON}_${TOKENS_V3.WETH}`] = 10000;    // MON/WETH = 1%
-  discoveredFeeTiers[`${TOKENS_V3.UNI}_${TOKENS_V3.WETH}`] = 3000;     // UNI/WETH = 0.3%
-  discoveredFeeTiers[`${TOKENS_V3.LINK}_${TOKENS_V3.WETH}`] = 10000;   // LINK/WETH = 1%
-  discoveredFeeTiers[`${TOKENS_V3.YU}_${TOKENS_V3.YBTC}`] = 3000;      // YU/YBTC = 0.3%
-  discoveredFeeTiers[`${TOKENS_V3.USDT}_${TOKENS_V3.WETH}`] = 10000;   // USDT/WETH = 1%
-  discoveredFeeTiers[`${TOKENS_V3.USDC}_${TOKENS_V3.UNI}`] = 100;      // USDC/UNI = 0.01%
-  discoveredFeeTiers[`${TOKENS_V3.QRT}_${TOKENS_V3.WETH}`] = 3000;     // QRT/WETH = 0.3%
-  discoveredFeeTiers[`${TOKENS_V3.YU}_${TOKENS_V3.WETH}`] = 10000;     // YU/WETH = 1%
+  // Iterar por todos los pools en el snapshot
+  for (const [poolKey, poolData] of Object.entries(liquidityData)) {
+    // Solo procesar pools V3
+    if (poolData.type === "V3") {
+      const token0Address = poolData.token0.address.toLowerCase();
+      const token1Address = poolData.token1.address.toLowerCase();
+      const fee = poolData.fee;
+      
+      // Guardar fee tier para ambos sentidos del par
+      discoveredFeeTiers[`${token0Address}_${token1Address}`] = fee;
+      discoveredFeeTiers[`${token1Address}_${token0Address}`] = fee;
+      
+      console.log(`  Pool ${poolData.token0.symbol}/${poolData.token1.symbol}: fee ${fee/10000}%`);
+    }
+  }
   
-  console.log("✅ Fee tiers configurados para todos los pares conocidos");
+  console.log(`✅ Cargados ${Object.keys(discoveredFeeTiers).length/2} pares de tokens con sus fee tiers`);
   
   return discoveredFeeTiers;
+}
+
+// ================================
+// Verificar liquidez Aave desde snapshot
+// ================================
+function checkAaveLiquidityFromSnapshot(tokenAddress, requiredAmount) {
+  try {
+    // Verificar si tenemos datos de Aave en el snapshot
+    if (!liquidityData.AAVE_V3 || !liquidityData.AAVE_V3.reserves) {
+      console.log("❌ Datos de reservas Aave no encontrados en el snapshot");
+      return { hasLiquidity: false };
+    }
+    
+    // Normalizar la dirección
+    const normalizedAddress = tokenAddress.toLowerCase();
+    
+    // Buscar el token en las reservas de Aave
+    let reserveData = null;
+    let tokenSymbol = "";
+    
+    // Buscar por dirección
+    for (const [symbol, data] of Object.entries(liquidityData.AAVE_V3.reserves)) {
+      if (data.address.toLowerCase() === normalizedAddress) {
+        reserveData = data;
+        tokenSymbol = symbol;
+        break;
+      }
+    }
+    
+    if (!reserveData) {
+      console.log(`⚠️ Token ${normalizedAddress} no encontrado en las reservas de Aave`);
+      return { hasLiquidity: false };
+    }
+    
+    // En el snapshot no tenemos balance directo, pero podemos usar el índice de liquidez
+    // como indicador aproximado
+    const liquidityIndex = ethers.BigNumber.from(reserveData.liquidityIndex);
+    const currentLiquidityRate = ethers.BigNumber.from(reserveData.currentLiquidityRate);
+    
+    // Una tasa de liquidez positiva y un índice de liquidez alto generalmente indican liquidez disponible
+    const hasLiquidity = currentLiquidityRate.gt(0) && liquidityIndex.gt(ethers.utils.parseUnits("1", 18));
+    
+    if (hasLiquidity) {
+      console.log(`✅ Reserva Aave para ${tokenSymbol} parece tener liquidez suficiente`);
+      console.log(`   Tasa de liquidez: ${ethers.utils.formatUnits(currentLiquidityRate, 27)}%`);
+    } else {
+      console.log(`⚠️ Posible liquidez insuficiente para ${tokenSymbol} en Aave`);
+      console.log(`   Tasa de liquidez: ${ethers.utils.formatUnits(currentLiquidityRate, 27)}%`);
+    }
+    
+    return {
+      hasLiquidity,
+      reserveData
+    };
+  } catch (error) {
+    console.error(`❌ Error verificando liquidez en Aave desde snapshot: ${error.message}`);
+    return { hasLiquidity: false, error: error.message };
+  }
 }
 
 // ================================
@@ -406,6 +546,13 @@ async function verifyFlashLoanSafety(tokenAddress, amount, decimals) {
     const normalizedAddress = tokenAddress.toLowerCase();
     if (allowedTokens.some(addr => addr.toLowerCase() === normalizedAddress)) {
       console.log(`✅ Token aprobado para flash loan: ${normalizedAddress}`);
+      
+      // Verificar liquidez desde el snapshot
+      const liquidityCheck = checkAaveLiquidityFromSnapshot(tokenAddress, amount);
+      if (!liquidityCheck.hasLiquidity) {
+        console.log(`⚠️ Aave podría no tener suficiente liquidez para este token`);
+      }
+      
       return true;
     }
     
@@ -417,55 +564,11 @@ async function verifyFlashLoanSafety(tokenAddress, amount, decimals) {
   }
 }
 
-// ================================
-// Función para verificar liquidez Aave antes de ejecutar flash loan
-// ================================
-async function checkAaveLiquidity(tokenAddress, requiredAmount) {
-  try {
-    // Connect directly to the Aave Pool
-    const poolAddress = "0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951";
-    
-    // Get token details
-    const tokenContract = new ethers.Contract(
-      tokenAddress, 
-      [
-        "function decimals() view returns (uint8)", 
-        "function symbol() view returns (string)",
-        "function balanceOf(address account) view returns (uint256)"
-      ], 
-      provider
-    );
-    
-    const decimals = await tokenContract.decimals();
-    const symbol = await tokenContract.symbol();
-    
-    // Check actual pool balance - fix the balanceOf call
-    const balance = await tokenContract.balanceOf(poolAddress);
-    const formattedBalance = ethers.utils.formatUnits(balance, decimals);
-    
-    const hasLiquidity = balance.gte(requiredAmount);
-    
-    if (hasLiquidity) {
-      console.log(`✅ Hay suficiente liquidez en Aave para el flash loan: ${formattedBalance} ${symbol}`);
-    } else {
-      console.log(`⚠️ Liquidez insuficiente: Necesitas ${ethers.utils.formatUnits(requiredAmount, decimals)} ${symbol}, Disponible: ${formattedBalance} ${symbol}`);
-    }
-    
-    return {
-      hasLiquidity,
-      availableLiquidity: balance,
-      formattedLiquidity: formattedBalance
-    };
-  } catch (error) {
-    console.error(`❌ Error verificando liquidez en Aave: ${error.message}`);
-    return { hasLiquidity: false, error: error.message };
-  }
-}
-
 // Add this function to dynamically adjust flash loan amount based on available liquidity
 async function getOptimalFlashLoanAmount(tokenAddress, requestedAmount, decimals) {
   try {
-    const liquidityCheck = await checkAaveLiquidity(tokenAddress, requestedAmount);
+    // Verificar liquidez desde el snapshot
+    const liquidityCheck = checkAaveLiquidityFromSnapshot(tokenAddress, requestedAmount);
     
     if (liquidityCheck.hasLiquidity) {
       return {
@@ -474,12 +577,12 @@ async function getOptimalFlashLoanAmount(tokenAddress, requestedAmount, decimals
       };
     }
     
-    // If not enough liquidity, calculate a safe amount (80% of available)
-    const safeAmount = liquidityCheck.availableLiquidity.mul(80).div(100);
+    // Si no hay suficiente liquidez, usar un monto conservador
+    const safeAmount = requestedAmount.div(10); // 10% del monto solicitado
     
     // Format for display
     const formattedSafeAmount = ethers.utils.formatUnits(safeAmount, decimals);
-    console.log(`🔄 Ajustando monto de flash loan a ${formattedSafeAmount} basado en liquidez disponible`);
+    console.log(`🔄 Ajustando monto de flash loan a ${formattedSafeAmount} por posible limitación de liquidez`);
     
     return {
       amount: safeAmount,
@@ -536,10 +639,10 @@ async function executeArbitrage(tokenInSymbol, tokenOutSymbol, amountInFormatted
     // Calcular monto con decimales
     const amountIn = ethers.utils.parseUnits(amountInFormatted, decimals);
     
-    // NUEVO: Verificar liquidez en Aave antes de intentar flash loan
-    const liquidityCheck = await checkAaveLiquidity(tokenInAddress, amountIn);
+    // Verificar liquidez en Aave usando el snapshot
+    const liquidityCheck = checkAaveLiquidityFromSnapshot(tokenInAddress, amountIn);
     if (!liquidityCheck.hasLiquidity) {
-      console.log(`⚠️ Cambiando a arbitraje directo debido a insuficiente liquidez en Aave`);
+      console.log(`⚠️ Cambiando a arbitraje directo debido a posible insuficiencia de liquidez en Aave`);
       return executeDirectArbitrage(tokenInSymbol, amountInFormatted);
     }
     
@@ -657,8 +760,8 @@ async function findTriangularArbitrageOpportunities(priceResults) {
 // ================================
 async function monitor() {
   try {
-    // 1. Discover fee tiers for V3 pools
-    discoveredFeeTiers = await discoverV3PoolFeeTiers();
+    // 1. Cargar fee tiers desde el snapshot
+    discoveredFeeTiers = getV3PoolFeeTiersFromSnapshot();
     
     // 2. Query prices across DEXes
     const priceResults = await getPrices();
@@ -747,5 +850,5 @@ async function getOptimizedGasFees(speed = 'fast') {
 }
 
 // Start monitoring
-console.log("🚀 Iniciando monitoreo de arbitraje en Sepolia Testnet...");
+console.log("🚀 Iniciando monitoreo de arbitraje en Sepolia Testnet usando datos de liquidez precalculados...");
 monitor();

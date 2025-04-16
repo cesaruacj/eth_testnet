@@ -1,12 +1,14 @@
 /**
  * Sepolia Testnet Addresses Configuration - VERIFIED ADDRESSES ONLY
- * Last updated: April 15, 2025
  */
 
-// DEX Router Addresses
+//--------------------------------------------
+// DEX ROUTER ADDRESSES
+// -------------------------------------------
 export const DEX_ROUTERS = {
   SUSHI_V2: "0xeabce3e74ef41fb40024a21cc2ee2f5ddc615791",
   UNISWAP_V2: "0xee567fe1712faf6149d80da1e6934e354124cfe3",
+  UNISWAP_V3: "0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E",
   UNISWAP_V3_QUOTER: "0xed1f6473345f45b75f8179591dd5ba1888cf2fb3"
 }
 
@@ -33,14 +35,18 @@ export const TOKENS = {
   WETH_ALT: "0x4f7a67464b5976d7547c860109e4432d50afb38e"
 }
 
-// Protocol Factory Addresses
+//----------------------------------------------
+// PROTOCOL FACTORY ADDRESSES
+// ---------------------------------------------
 export const FACTORIES = {
   UNISWAP_V3: "0x0227628f3F023bb0B980b67D528571c95c6DaC1c", // UniswapV3 Sepolia Factory
   UNISWAP_V2: "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f", // UniswapV2 SepoliaFactory
   SUSHISWAP_V2: "0xc35DADB65012eC5796536bD9864eD8773aBc74C4"  // SushiSwap Sepolia Factory
 }
 
+//--------------------------------------------
 // Pool Addresses - VERIFIED SEPOLIA ADDRESSES
+//--------------------------------------------
 export const POOLS = {
   // Uniswap V3 Pools
   UNIV3_METH_WETH: "0x84f491dd1e1bb2b251bea2cab9ac6849e94bfbc5",
@@ -83,4 +89,12 @@ export const AAVE_TOKENS = {
   USDC: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
   WETH: "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c",
   USDT: "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0"
+}
+
+// Aave V3 System Contracts - Separados de los pools DEX
+export const AAVE_V3 = {
+  // Registro de contratos que permite obtener dinámicamente el Pool y otros componentes
+  POOL_ADDRESSES_PROVIDER: "0x012bAC54348C0E635dCAc9D5FB99f06F24136C9A",
+  // Dirección hardcodeada del Pool (opcional, mejor usar el provider para obtenerla)
+  POOL: "0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951"
 }
