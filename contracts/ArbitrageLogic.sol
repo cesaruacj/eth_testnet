@@ -132,6 +132,52 @@ contract ArbitrageLogic is ReentrancyGuard {
     }
     
     /**
+     * @dev Ejecuta arbitraje directo desde una wallet externa (no flash loan)
+     * Esta función permite que cualquier usuario ejecute arbitraje si encuentra oportunidad
+     */
+    function executeDirectArbitrage(address tokenIn, uint256 amountIn) 
+        external 
+        nonReentrant 
+        returns (uint256)
+    {
+        // Transfer tokens from caller (already approved)
+        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+        
+        // Get initial balance after transfer
+        uint256 initialBalance = IERC20(tokenIn).balanceOf(address(this));
+        
+        // Consulta la mejor ruta para el swap
+        (uint256 bestAmountOut, uint256 bestDexIndex) = dexAggregator.getBestDexQuote(
+            tokenIn,
+            tokenIn, 
+            amountIn
+        );
+        
+        // Slippage tolerance
+        uint256 slippageTolerance = 100; // 1%
+        
+        // Execute the swap on the best DEX
+        dexAggregator.swapOnDex(
+            bestDexIndex,
+            tokenIn,
+            tokenIn,
+            amountIn,
+            slippageTolerance
+        );
+        
+        // Calculate profit
+        uint256 finalBalance = IERC20(tokenIn).balanceOf(address(this));
+        uint256 profit = finalBalance > initialBalance ? finalBalance - initialBalance : 0;
+        
+        emit ArbitrageExecuted(tokenIn, amountIn, finalBalance, profit);
+        
+        // Return tokens to caller
+        IERC20(tokenIn).transfer(msg.sender, finalBalance);
+        
+        return profit;
+    }
+    
+    /**
      * @dev Obtiene el precio en USD (8 decimales) de un token mediante Chainlink.
      */
     function getTokenPriceUSD(address token)

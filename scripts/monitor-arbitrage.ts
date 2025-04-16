@@ -592,7 +592,7 @@ async function executeDirectArbitrage(tokenInSymbol, amountInFormatted) {
       "USDT": TOKENS.USDT
     };
     
-    const tokenInAddress = tokenMap[tokenInSymbol];
+    const tokenInAddress = TOKENS[tokenInSymbol];
     if (!tokenInAddress) {
       console.log(`❌ No se pudo encontrar dirección para ${tokenInSymbol}`);
       return { success: false };

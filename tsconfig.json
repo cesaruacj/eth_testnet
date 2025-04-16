@@ -2,34 +2,15 @@
   "compilerOptions": {
     "target": "es2020",
     "module": "commonjs",
-    "moduleResolution": "node",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": false,           // Changed to false to avoid strictness issues with ethers v5
+    "strict": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "outDir": "dist",
-    "declaration": true,
-    "sourceMap": true,
-    "rootDir": ".",
     "baseUrl": ".",
-    "allowJs": true,
-    "checkJs": false,
-    "noImplicitAny": false
-    // Removed "paths" mapping as it can cause resolution issues
+    "paths": {
+      "@config/*": ["config/*"],
+      "@src/*": ["src/*"]
+    }
   },
-  "include": [
-    "./scripts",
-    "./test",
-    "./typechain-types",
-    "./utils",
-    "./client",
-    "./hardhat.config.ts"
-  ],
-  "files": [
-    "./hardhat.config.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["./scripts", "./src", "./config", "./test"]
 }
