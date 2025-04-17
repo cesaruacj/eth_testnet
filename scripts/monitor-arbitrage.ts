@@ -656,7 +656,7 @@ async function executeArbitrage(tokenInSymbol, tokenOutSymbol, amountInFormatted
     );
     
     // Get optimal gas settings for fast
-    const gasSettings = await getOptimizedGasFees('fast');
+    const gasSettings = await getOptimizedGasFees('fastest');
     
     // Execute the flash loan
     const tx = await flashLoanContract.executeFlashLoan(
@@ -725,7 +725,7 @@ async function executeDirectArbitrage(tokenInSymbol, amountInFormatted) {
     console.log(`✅ Approved ${ARBITRAGE_LOGIC_ADDRESS} to spend ${amountInFormatted} ${tokenInSymbol}`);
     
     // Get optimal gas settings
-    const gasSettings = await getOptimizedGasFees('fast');
+    const gasSettings = await getOptimizedGasFees('fastest');
     
     // Execute direct arbitrage
     const tx = await arbLogicContract.executeDirectArbitrage(
@@ -770,12 +770,12 @@ async function monitor() {
     console.log("\n=================== ANÁLISIS DE ARBITRAJE DIRECTO ===================");
     
     // Check each token pair
-    await analyzeArbitragePair(priceResults.usdc_weth, "USDC", "WETH", "1000");
-    await analyzeArbitragePair(priceResults.YBTC_weth, "YBTC", "WETH", "0.05");
-    await analyzeArbitragePair(priceResults.meth_weth, "METH", "WETH", "1");
-    await analyzeArbitragePair(priceResults.uni_weth, "UNI", "WETH", "10");
-    await analyzeArbitragePair(priceResults.link_weth, "LINK", "WETH", "10");
-    await analyzeArbitragePair(priceResults.dai_weth, "DAI", "WETH", "1000");
+    await analyzeArbitragePair(priceResults.usdc_weth, "USDC", "WETH", "500");
+    await analyzeArbitragePair(priceResults.YBTC_weth, "YBTC", "WETH", "0.025");
+    await analyzeArbitragePair(priceResults.meth_weth, "METH", "WETH", "0.5");
+    await analyzeArbitragePair(priceResults.uni_weth, "UNI", "WETH", "5");
+    await analyzeArbitragePair(priceResults.link_weth, "LINK", "WETH", "5");
+    await analyzeArbitragePair(priceResults.dai_weth, "DAI", "WETH", "500");
     
     // 4. Look for triangular opportunities 
     console.log("\n=================== ANÁLISIS DE ARBITRAJE TRIANGULAR ===================");

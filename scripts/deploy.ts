@@ -1,4 +1,3 @@
-// filepath: c:\Users\ccane\OneDrive\Escritorio\Maestria UACJ\4to Semestre\Seminario IV\basefl2\scripts\deploy.ts
 import { ethers } from "hardhat";
 import * as dotenv from "dotenv";
 import fs from "fs";
@@ -35,19 +34,37 @@ async function main() {
   await flashLoan.deployed();
   console.log(`FlashLoanSepolia deployed to: ${flashLoan.address}`);
 
+  // Transfiere la propiedad de ArbitrageLogic a FlashLoanSepolia
+  console.log("\nConfigurando permisos entre contratos...");
+  console.log("Transfiriendo ownership de ArbitrageLogic a FlashLoanSepolia...");
+  try {
+    // Llama a setOwner() para transferir la propiedad
+    const setOwnerTx = await arbitrageLogic.setOwner(flashLoan.address);
+    await setOwnerTx.wait();
+    console.log("✅ Ownership transferido exitosamente");
+    
+    // Verifica el nuevo owner
+    const newOwner = await arbitrageLogic.owner();
+    console.log(`Nuevo owner de ArbitrageLogic: ${newOwner}`);
+    console.log(`Dirección de FlashLoanSepolia: ${flashLoan.address}`);
+    console.log(`¿Coinciden? ${newOwner.toLowerCase() === flashLoan.address.toLowerCase()}`);
+  } catch (error) {
+    console.error("❌ Error al transferir ownership:", error);
+  }
+
   // 4. Update configuration file with new addresses
   try {
-    const configPath = path.join(__dirname, "..", "config", "addresses.ts");
+    const configPath = path.join(__dirname, "sepoliaAddresses.ts");
     let configContent = fs.readFileSync(configPath, "utf8");
     
     // Update contract addresses in the config file
     configContent = configContent.replace(
-      /DEPLOYED_CONTRACTS: \{[\s\S]*?\}/,
-      `DEPLOYED_CONTRACTS: {
-    DEX_AGGREGATOR: "${dexAggregator.address}",
-    ARBITRAGE_LOGIC: "${arbitrageLogic.address}",
-    FLASH_LOAN: "${flashLoan.address}"
-  }`
+      /export const DEPLOYED_CONTRACTS = \{[\s\S]*?\}/,
+      `export const DEPLOYED_CONTRACTS = {
+  // Automatically updated by deploy script
+  ARBITRAGE_LOGIC: "${arbitrageLogic.address}",
+  FLASH_LOAN: "${flashLoan.address}"
+}`
     );
     
     fs.writeFileSync(configPath, configContent);

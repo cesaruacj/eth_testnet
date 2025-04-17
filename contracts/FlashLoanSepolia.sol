@@ -4,9 +4,10 @@ pragma solidity ^0.8.28;
 import { IPoolAddressesProvider } from "@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol";
 import { IPool } from "@aave/core-v3/contracts/interfaces/IPool.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ArbitrageLogic.sol";
 
-contract FlashLoanSepolia {
+contract FlashLoanSepolia is Ownable {
     IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
     IPool public immutable POOL;
     ArbitrageLogic public arbitrageLogic;
