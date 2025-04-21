@@ -237,23 +237,16 @@ async function executeTestFlashLoan() {
     // Conectar al contrato FlashLoan con la wallet
     const flashLoanWithSigner = new ethers.Contract(FLASH_LOAN_CONTRACT_ADDRESS, flashLoanABI, wallet);
     
-    // Configurar gas optimizado
-    const feeData = await provider.getFeeData();
-    const gasSettings: any = {
-      gasLimit: 5000000
+    // Configurar opciones de transacción
+    const txOptions = {
+      gasLimit: 300000,
+      maxFeePerGas: ethers.utils.parseUnits("20", "gwei"),
+      maxPriorityFeePerGas: ethers.utils.parseUnits("2", "gwei")
     };
 
-    if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
-      gasSettings.maxFeePerGas = feeData.maxFeePerGas.mul(15).div(10);
-      gasSettings.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas.mul(15).div(10);
-    } else {
-      // Fallback a gasPrice tradicional si EIP-1559 no está disponible
-      gasSettings.gasPrice = (await provider.getGasPrice()).mul(15).div(10);
-    }
-    
     // Ejecutar la transacción
     console.log("Enviando transacción...");
-    const tx = await flashLoanWithSigner.executeFlashLoan(TEST_TOKEN, amount, gasSettings);
+    const tx = await flashLoanWithSigner.executeFlashLoan(TEST_TOKEN, amount, txOptions);
     console.log(`✓ Transacción enviada: ${tx.hash}`);
     console.log(`Ver en Etherscan: https://sepolia.etherscan.io/tx/${tx.hash}`);
     

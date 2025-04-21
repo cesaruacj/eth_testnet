@@ -27,6 +27,7 @@ contract ArbitrageLogic is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     address public owner;
+    address public flashLoan;
     DexAggregator public dexAggregator;
     
     // Mapping token => dirección del oráculo (Chainlink)
@@ -43,6 +44,12 @@ contract ArbitrageLogic is ReentrancyGuard {
         require(msg.sender == owner, "Not owner");
         _;
     }
+
+    // Modificar para permitir tanto al owner como al flashLoan
+    modifier onlyAuthorized() {
+        require(msg.sender == owner || msg.sender == flashLoan, "Not owner");
+        _;
+    }
     
     constructor(address _dexAggregator) {
         owner = msg.sender;
@@ -57,60 +64,23 @@ contract ArbitrageLogic is ReentrancyGuard {
         dexAggregator = DexAggregator(_dexAggregator);
     }
     
-    function setPriceFeed(address _token, address _priceFeed) external onlyOwner {
+    function setPriceFeed(address _token, address _priceFeed) external onlyAuthorized {
         priceFeeds[_token] = _priceFeed;
+    }
+
+    // Añadir para configurar FlashLoan
+    function setFlashLoanAddress(address _flashLoan) external onlyOwner {
+        flashLoan = _flashLoan;
     }
     
     /**
      * @dev Ejecuta un arbitraje simple: tokenIn -> (swap en el DEX óptimo) -> tokenIn.
      *      Esta función consulta la mejor ruta en DexAggregator, ejecuta el swap y verifica rentabilidad.
      */
-    function executeArbitrage(address tokenIn, uint256 amountIn)
-        public
-        nonReentrant
-        onlyOwner
-    {
-        // Verificar que hay oráculo para tokenIn
-        require(priceFeeds[tokenIn] != address(0), "No oracle for tokenIn");
-        uint256 priceInUSD = getTokenPriceUSD(tokenIn);
-        uint256 initialBalance = IERC20(tokenIn).balanceOf(address(this));
-        require(initialBalance >= amountIn, "Insufficient balance");
-
-        // Consulta la mejor ruta para el swap de tokenIn a tokenIn (ciclo) usando DexAggregator.
-        (uint256 bestAmountOut, uint256 bestDexIndex) = dexAggregator.getBestDexQuote(
-            tokenIn,
-            tokenIn, // En un ciclo real se usaría un token intermedio; aquí se simplifica
-            amountIn
-        );
-        // Calculamos el mínimo aceptable con slippage
-        uint256 slippageTolerance = 100; // 1%
-        
-        // Ejecutamos el swap usando DexAggregator
-        dexAggregator.swapOnDex(
-            bestDexIndex,
-            tokenIn,
-            tokenIn,
-            amountIn,
-            slippageTolerance
-        );
-        
-        // Verificar que se obtuvo ganancia
-        uint256 finalBalance = IERC20(tokenIn).balanceOf(address(this));
-        require(finalBalance >= amountIn, "Arbitrage did not cover initial amount");
-        uint256 profit = finalBalance - amountIn;
-        require(profit > 0, "Arbitrage not profitable");
-        
-        emit ArbitrageExecuted(tokenIn, amountIn, finalBalance, profit);
-        
-        // Using priceInUSD to avoid compiler warning
-        if (priceInUSD == 0) {
-            // This code will never execute, but prevents the unused variable warning
-            revert("Price should not be zero");
-        }
-
-        // After completing trades - transfer ALL tokens back to repay flash loan
-        uint256 currentBalance = IERC20(tokenIn).balanceOf(address(this));
-        IERC20(tokenIn).transfer(msg.sender, currentBalance);
+    function executeArbitrage(address tokenIn, uint256 amountIn) public nonReentrant {
+        require(msg.sender == flashLoan, "Only FlashLoan can call");
+        // Solo emitir evento, sin hacer swaps por ahora
+        emit ArbitrageExecuted(tokenIn, amountIn, amountIn, 0);
     }
     
     /**

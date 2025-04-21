@@ -2,6 +2,7 @@ import { ethers } from "hardhat";
 import * as dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
+import { AAVE_TOKENS } from "./sepoliaAddresses";
 dotenv.config();
 
 async function main() {
@@ -11,13 +12,27 @@ async function main() {
 
   // 1. Deploy DexAggregator
   console.log("Deploying DexAggregator...");
+  const UNISWAP_V3_QUOTER = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6"; // Sepolia Quoter
   const DexAggregatorFactory = await ethers.getContractFactory("DexAggregator");
-  const dexAggregator = await DexAggregatorFactory.deploy({
-    gasPrice: ethers.utils.parseUnits("10", "gwei"),
-    gasLimit: 3000000,
-  });
+
+  // Constructor args y opciones de TX separados
+  const dexAggregator = await DexAggregatorFactory.deploy(
+    UNISWAP_V3_QUOTER,
+    {
+        gasPrice: ethers.utils.parseUnits("15", "gwei"), // Aumentado
+        gasLimit: 4000000  // Aumentado
+    }
+  );
   await dexAggregator.deployed();
   console.log(`DexAggregator deployed to: ${dexAggregator.address}`);
+
+  // Después de desplegar DexAggregator
+  console.log("Configurando DEXs...");
+  await dexAggregator.addDex(
+      0, // UniswapV2
+      "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D" // Router de Uniswap V2 en Sepolia
+  );
+  console.log("✅ DEX configurado");
 
   // 2. Deploy ArbitrageLogic with DexAggregator address
   console.log("Deploying ArbitrageLogic...");
@@ -33,6 +48,17 @@ async function main() {
   const flashLoan = await FlashLoanFactory.deploy(AAVE_PROVIDER_ADDRESS, arbitrageLogic.address);
   await flashLoan.deployed();
   console.log(`FlashLoanSepolia deployed to: ${flashLoan.address}`);
+
+  // NUEVO: Configurar FlashLoanAddress en ArbitrageLogic
+  console.log("Configurando dirección de FlashLoan en ArbitrageLogic...");
+  await arbitrageLogic.setFlashLoanAddress(flashLoan.address);
+
+  // NUEVO: Configurar price feeds (necesitarás agregar referencias a AAVE_TOKENS y CHAINLINK_PRICE_FEEDS)
+  console.log("Configurando oráculos de precios...");
+  const CHAINLINK_PRICE_FEEDS = {
+    LINK: "0xc59E3633BAAC79493d908e63626716e204A45EdF" // LINK/USD Sepolia
+  };
+  await arbitrageLogic.setPriceFeed(AAVE_TOKENS.LINK, CHAINLINK_PRICE_FEEDS.LINK);
 
   // Transfiere la propiedad de ArbitrageLogic a FlashLoanSepolia
   console.log("\nConfigurando permisos entre contratos...");
