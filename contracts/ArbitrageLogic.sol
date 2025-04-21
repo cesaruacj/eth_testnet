@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./DexAggregator.sol";
 
 interface AggregatorV3Interface {
@@ -21,48 +19,60 @@ interface AggregatorV3Interface {
 }
 
 /**
- * @title ArbitrageLogicUpgradeable
+ * @title ArbitrageLogic
  * @dev Lógica avanzada de arbitraje para usar con flash loans.
  *      Se apoya en DexAggregator para seleccionar la mejor ruta entre múltiples DEX.
  */
-contract ArbitrageLogicUpgradeable is 
-    Initializable,
-    ReentrancyGuardUpgradeable, 
-    OwnableUpgradeable
-{
+contract ArbitrageLogic is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    DexAggregator public dexAggregator;
+    address public owner;
     address public flashLoan;
+    DexAggregator public dexAggregator;
+    
+    // Mapping token => dirección del oráculo (Chainlink)
     mapping(address => address) public priceFeeds;
-
+    
     event ArbitrageExecuted(
         address indexed tokenIn,
         uint256 amountIn,
         uint256 finalBalance,
         uint256 profit
     );
-
-    // Reemplaza constructor con initialize
-    function initialize(address _dexAggregator) public initializer {
-        __ReentrancyGuard_init();
-        __Ownable_init();
-        
-        dexAggregator = DexAggregator(_dexAggregator);
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not owner");
+        _;
     }
 
+    // Modificar para permitir tanto al owner como al flashLoan
+    modifier onlyAuthorized() {
+        require(msg.sender == owner || msg.sender == flashLoan, "Not owner");
+        _;
+    }
+    
+    constructor(address _dexAggregator) {
+        owner = msg.sender;
+        dexAggregator = DexAggregator(_dexAggregator);
+    }
+    
+    function setOwner(address _newOwner) external onlyOwner {
+        owner = _newOwner;
+    }
+    
     function setDexAggregator(address _dexAggregator) external onlyOwner {
         dexAggregator = DexAggregator(_dexAggregator);
     }
-
-    function setPriceFeed(address _token, address _priceFeed) external onlyOwner {
+    
+    function setPriceFeed(address _token, address _priceFeed) external onlyAuthorized {
         priceFeeds[_token] = _priceFeed;
     }
 
+    // Añadir para configurar FlashLoan
     function setFlashLoanAddress(address _flashLoan) external onlyOwner {
         flashLoan = _flashLoan;
     }
-
+    
     /**
      * @dev Ejecuta un arbitraje simple: tokenIn -> (swap en el DEX óptimo) -> tokenIn.
      *      Esta función consulta la mejor ruta en DexAggregator, ejecuta el swap y verifica rentabilidad.

@@ -6,7 +6,6 @@ import "@nomiclabs/hardhat-etherscan";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "@nomicfoundation/hardhat-chai-matchers";
-require('@openzeppelin/hardhat-upgrades');
 
 // Configuración de Hardhat usando Sepolia testnet
 console.log(`Configurando para Ethereum Sepolia testnet`);

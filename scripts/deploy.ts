@@ -1,4 +1,4 @@
-import { ethers, upgrades } from "hardhat";
+import { ethers } from "hardhat";
 import * as dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
@@ -16,13 +16,11 @@ async function main() {
   const UNISWAP_V3_QUOTER = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6"; // Sepolia Quoter
   const DexAggregatorFactory = await ethers.getContractFactory("DexAggregator");
 
+  // Constructor args y opciones de TX separados
+  const gasSettings = await getOptimizedGasFees('default'); //
   const dexAggregator = await DexAggregatorFactory.deploy(
     UNISWAP_V3_QUOTER,
-    { 
-      gasLimit: 3000000,
-      maxFeePerGas: ethers.utils.parseUnits("2", "gwei"),
-      maxPriorityFeePerGas: ethers.utils.parseUnits("1", "gwei")
-    }
+    gasSettings
   );
   const receipt = await dexAggregator.deployTransaction.wait();
   console.log(`Gas usado en despliegue: ${receipt.gasUsed.toString()}`);
@@ -38,16 +36,12 @@ async function main() {
   );
   console.log("✅ DEX configurado");
 
-  // 2. Deploy ArbitrageLogic as upgradeable
-  console.log("Deploying ArbitrageLogic as upgradeable...");
-  const ArbitrageLogicFactory = await ethers.getContractFactory("ArbitrageLogicUpgradeable");
-  const arbitrageLogic = await upgrades.deployProxy(
-    ArbitrageLogicFactory, 
-    [dexAggregator.address], 
-    { initializer: 'initialize' }
-  );
+  // 2. Deploy ArbitrageLogic with DexAggregator address
+  console.log("Deploying ArbitrageLogic...");
+  const ArbitrageLogicFactory = await ethers.getContractFactory("ArbitrageLogic");
+  const arbitrageLogic = await ArbitrageLogicFactory.deploy(dexAggregator.address);
   await arbitrageLogic.deployed();
-  console.log(`ArbitrageLogic (proxy) deployed to: ${arbitrageLogic.address}`);
+  console.log(`ArbitrageLogic deployed to: ${arbitrageLogic.address}`);
 
   // 3. Deploy FlashLoanSepolia with Aave provider and ArbitrageLogic addresses
   console.log("Deploying FlashLoanSepolia...");

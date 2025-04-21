@@ -4,31 +4,19 @@ pragma solidity ^0.8.28;
 import { IPoolAddressesProvider } from "@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol";
 import { IPool } from "@aave/core-v3/contracts/interfaces/IPool.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ArbitrageLogic.sol";
 
-contract FlashLoanSepoliaUpgradeable is Initializable, OwnableUpgradeable, UUPSUpgradeable {
-    IPoolAddressesProvider public ADDRESSES_PROVIDER;
-    IPool public POOL;
+contract FlashLoanSepolia is Ownable {
+    IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
+    IPool public immutable POOL;
     ArbitrageLogic public arbitrageLogic;
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
-    function initialize(address provider, address _arbitrageLogic) public initializer {
-        __Ownable_init();
-        __UUPSUpgradeable_init();
-        
+    constructor(address provider, address _arbitrageLogic) {
         ADDRESSES_PROVIDER = IPoolAddressesProvider(provider);
         POOL = IPool(ADDRESSES_PROVIDER.getPool());
         arbitrageLogic = ArbitrageLogic(_arbitrageLogic);
     }
-
-    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     function executeFlashLoan(address asset, uint256 amount) external {
         address[] memory assets = new address[](1);
@@ -67,13 +55,13 @@ contract FlashLoanSepoliaUpgradeable is Initializable, OwnableUpgradeable, UUPSU
         
         uint256 amountOwing = amounts[0] + premiums[0];
         
-        // Transfer tokens directly to ArbitrageLogic
+        // AÑADIR ESTA LÍNEA: Transferir los tokens directamente a ArbitrageLogic
         IERC20(assets[0]).transfer(address(arbitrageLogic), amounts[0]);
         
-        // Execute arbitrage
+        // Ejecutar arbitraje
         arbitrageLogic.executeArbitrage(assets[0], amounts[0]);
         
-        // Approve POOL to withdraw amount + premium
+        // Aprobar a POOL para retirar monto + premium
         IERC20(assets[0]).approve(address(POOL), amountOwing);
         
         return true;
