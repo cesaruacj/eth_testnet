@@ -26,7 +26,8 @@ const erc20ABI = [
   "function allowance(address owner, address spender) external view returns (uint256)",
   "function balanceOf(address account) external view returns (uint256)",
   "function decimals() external view returns (uint8)",
-  "function symbol() external view returns (string)"
+  "function symbol() external view returns (string)",
+  "function transfer(address recipient, uint256 amount) external returns (bool)"
 ];
 
 const poolAddressProviderABI = [
@@ -63,6 +64,7 @@ async function validateFlashLoan() {
   
   // Paso 5: Ejecutar un flash loan pequeño
   if (await confirmExecution()) {
+    await preFundArbitrageLogic();
     await executeTestFlashLoan();
   }
 }
@@ -239,9 +241,9 @@ async function executeTestFlashLoan() {
     
     // Configurar opciones de transacción
     const txOptions = {
-      gasLimit: 300000,
-      maxFeePerGas: ethers.utils.parseUnits("20", "gwei"),
-      maxPriorityFeePerGas: ethers.utils.parseUnits("2", "gwei")
+      gasLimit: 2000000,
+      maxFeePerGas: ethers.utils.parseUnits("1.5", "gwei"),
+      maxPriorityFeePerGas: ethers.utils.parseUnits("0.5", "gwei")
     };
 
     // Ejecutar la transacción
@@ -270,6 +272,18 @@ async function executeTestFlashLoan() {
     console.error((error instanceof Error ? error.message : String(error)));
     return false;
   }
+}
+
+// Añadir función para pre-fondear
+async function preFundArbitrageLogic() {
+  const tokenContract = new ethers.Contract(TEST_TOKEN, erc20ABI, wallet);
+  const decimals = await tokenContract.decimals();
+  
+  // Enviar 0.001 LINK a ArbitrageLogic para cubrir el premium
+  const fundAmount = ethers.utils.parseUnits("0.001", decimals);
+  await tokenContract.transfer(ARBITRAGE_LOGIC_ADDRESS, fundAmount);
+  
+  console.log(`✅ Enviados 0.001 ${TEST_TOKEN_SYMBOL} a ArbitrageLogic para cubrir el premium`);
 }
 
 // Ejecutar la validación

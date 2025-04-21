@@ -6,6 +6,7 @@ import "@nomiclabs/hardhat-etherscan";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "@nomicfoundation/hardhat-chai-matchers";
+require('@openzeppelin/hardhat-upgrades');
 
 // Configuración de Hardhat usando Sepolia testnet
 console.log(`Configurando para Ethereum Sepolia testnet`);
@@ -17,6 +18,13 @@ const ETHERSCAN_API_KEY = process.env.API_KEY
 
 const config: HardhatUserConfig = {
   solidity: {
+    version: "0.8.28",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      },
+    },
     compilers: [
       { version: "0.5.5" },
       { version: "0.6.6" },

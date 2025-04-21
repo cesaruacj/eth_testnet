@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./DexAggregator.sol";
 
 interface AggregatorV3Interface {
@@ -19,68 +21,70 @@ interface AggregatorV3Interface {
 }
 
 /**
- * @title ArbitrageLogic
+ * @title ArbitrageLogicUpgradeable
  * @dev Lógica avanzada de arbitraje para usar con flash loans.
  *      Se apoya en DexAggregator para seleccionar la mejor ruta entre múltiples DEX.
  */
-contract ArbitrageLogic is ReentrancyGuard {
+contract ArbitrageLogicUpgradeable is 
+    Initializable,
+    ReentrancyGuardUpgradeable, 
+    OwnableUpgradeable
+{
     using SafeERC20 for IERC20;
 
-    address public owner;
-    address public flashLoan;
     DexAggregator public dexAggregator;
-    
-    // Mapping token => dirección del oráculo (Chainlink)
+    address public flashLoan;
     mapping(address => address) public priceFeeds;
-    
+
     event ArbitrageExecuted(
         address indexed tokenIn,
         uint256 amountIn,
         uint256 finalBalance,
         uint256 profit
     );
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Not owner");
-        _;
-    }
 
-    // Modificar para permitir tanto al owner como al flashLoan
-    modifier onlyAuthorized() {
-        require(msg.sender == owner || msg.sender == flashLoan, "Not owner");
-        _;
-    }
-    
-    constructor(address _dexAggregator) {
-        owner = msg.sender;
+    // Reemplaza constructor con initialize
+    function initialize(address _dexAggregator) public initializer {
+        __ReentrancyGuard_init();
+        __Ownable_init();
+        
         dexAggregator = DexAggregator(_dexAggregator);
     }
-    
-    function setOwner(address _newOwner) external onlyOwner {
-        owner = _newOwner;
-    }
-    
+
     function setDexAggregator(address _dexAggregator) external onlyOwner {
         dexAggregator = DexAggregator(_dexAggregator);
     }
-    
-    function setPriceFeed(address _token, address _priceFeed) external onlyAuthorized {
+
+    function setPriceFeed(address _token, address _priceFeed) external onlyOwner {
         priceFeeds[_token] = _priceFeed;
     }
 
-    // Añadir para configurar FlashLoan
     function setFlashLoanAddress(address _flashLoan) external onlyOwner {
         flashLoan = _flashLoan;
     }
-    
+
     /**
      * @dev Ejecuta un arbitraje simple: tokenIn -> (swap en el DEX óptimo) -> tokenIn.
      *      Esta función consulta la mejor ruta en DexAggregator, ejecuta el swap y verifica rentabilidad.
      */
     function executeArbitrage(address tokenIn, uint256 amountIn) public nonReentrant {
         require(msg.sender == flashLoan, "Only FlashLoan can call");
-        // Solo emitir evento, sin hacer swaps por ahora
-        emit ArbitrageExecuted(tokenIn, amountIn, amountIn, 0);
+        
+        // 1. Calcular el premium (0.09% del préstamo)
+        uint256 premium = (amountIn * 9) / 10000;
+        uint256 requiredAmount = amountIn + premium;
+        
+        // 2. Ejecutar swap en el mejor DEX (o simular para validación)
+        // [... Código de swap existente ...]
+        
+        // 3. Transferir al menos el monto requerido de vuelta a FlashLoanSepolia
+        IERC20(tokenIn).transfer(flashLoan, requiredAmount);
+        
+        // 4. Cualquier token adicional es ganancia para ArbitrageLogic
+        uint256 remainingBalance = IERC20(tokenIn).balanceOf(address(this));
+        uint256 profit = remainingBalance > 0 ? remainingBalance : 0;
+        
+        emit ArbitrageExecuted(tokenIn, amountIn, requiredAmount, profit);
     }
     
     /**

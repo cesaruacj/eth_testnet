@@ -12,37 +12,13 @@ const provider = getProvider();
  * @param speed - 'default', 'fast', or 'fastest'
  */
 export async function getOptimizedGasFees(speed = 'default') {
-  try {
-    const feeData = await provider.getFeeData();
-    
-    // Determine multiplier based on speed
-    let multiplier: number;
-    switch(speed) {
-      case 'fastest':
-        multiplier = GAS_SETTINGS.FASTEST_MULTIPLIER;
-        break;
-      case 'fast':
-        multiplier = GAS_SETTINGS.FAST_MULTIPLIER;
-        break;
-      default:
-        multiplier = GAS_SETTINGS.DEFAULT_MULTIPLIER;
-    }
-    
-    // Apply multiplier to gas settings
-    return {
-      maxFeePerGas: feeData.maxFeePerGas?.mul(Math.floor(multiplier * 100)).div(100) || null,
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.mul(Math.floor(multiplier * 100)).div(100) || null,
-      gasLimit: GAS_SETTINGS.DEFAULT_GAS_LIMIT
-    };
-  } catch (error) {
-    console.warn(`Error getting optimized gas fees: ${error.message}`);
-    
-    // Default fallback values
-    return {
-      gasPrice: ethers.utils.parseUnits("5", "gwei"),
-      gasLimit: GAS_SETTINGS.DEFAULT_GAS_LIMIT
-    };
-  }
+  const feeData = await provider.getFeeData();
+  
+  return {
+    gasLimit: 3000000,
+    maxFeePerGas: feeData.maxFeePerGas.mul(11).div(10), // 10% buffer
+    maxPriorityFeePerGas: feeData.maxPriorityFeePerGas
+  };
 }
 
 /**
