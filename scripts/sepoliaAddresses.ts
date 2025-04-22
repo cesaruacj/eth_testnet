@@ -78,8 +78,8 @@ export const FEE_TIERS = {
 // Deployed Contracts
 export const DEPLOYED_CONTRACTS = {
   // Automatically updated by deploy script
-  ARBITRAGE_LOGIC: "0xF2e0a5cA078D1e17503e4bb0fA5a694DBC7f9026",
-  FLASH_LOAN: "0xC1205A16aA0708AD6B8a1AAeDb36fA4c9D78D300"
+  ARBITRAGE_LOGIC: "0x2e1d938c3297d9367D01DAA99154b3E377ec2709",
+  FLASH_LOAN: "0x8ac331dF087273dB33e35aCA386a5E6319Ab6119"
 }
 
 // Add Aave V3 supported tokens

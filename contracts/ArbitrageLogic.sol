@@ -79,22 +79,39 @@ contract ArbitrageLogic is ReentrancyGuard {
      */
     function executeArbitrage(address tokenIn, uint256 amountIn) public nonReentrant {
         require(msg.sender == flashLoan, "Only FlashLoan can call");
-        
-        // 1. Calcular el premium (0.09% del préstamo)
-        uint256 premium = (amountIn * 9) / 10000;
+
+        // 1. Calcular el premium (0.05% del préstamo)
+        uint256 premium = (amountIn * 5) / 10000;
         uint256 requiredAmount = amountIn + premium;
-        
-        // 2. Ejecutar swap en el mejor DEX (o simular para validación)
-        // [... Código de swap existente ...]
-        
-        // 3. Transferir al menos el monto requerido de vuelta a FlashLoanSepolia
+
+        // 2. Consultar la mejor ruta y cotización en DexAggregator
+        (uint256 bestAmountOut, uint256 bestDexIndex) = dexAggregator.getBestDexQuote(
+            tokenIn,
+            tokenIn,
+            amountIn
+        );
+
+        // 3. Verificar si la ganancia cubre el premium
+        require(bestAmountOut > requiredAmount, "No profitable arbitrage opportunity");
+
+        // 4. Aprobar tokens al DexAggregator y ejecutar el swap
+        IERC20(tokenIn).approve(address(dexAggregator), amountIn);
+        uint256 receivedAmount = dexAggregator.swapOnDex(
+            bestDexIndex,
+            tokenIn,
+            tokenIn,
+            amountIn,
+            bestAmountOut * 995 / 1000 // 0.5% slippage tolerance
+        );
+
+        // 5. Transferir el préstamo + premium de vuelta a FlashLoanSepolia
         IERC20(tokenIn).transfer(flashLoan, requiredAmount);
-        
-        // 4. Cualquier token adicional es ganancia para ArbitrageLogic
+
+        // 6. Cualquier token adicional es ganancia para ArbitrageLogic
         uint256 remainingBalance = IERC20(tokenIn).balanceOf(address(this));
         uint256 profit = remainingBalance > 0 ? remainingBalance : 0;
-        
-        emit ArbitrageExecuted(tokenIn, amountIn, requiredAmount, profit);
+
+        emit ArbitrageExecuted(tokenIn, amountIn, receivedAmount, profit);
     }
     
     /**

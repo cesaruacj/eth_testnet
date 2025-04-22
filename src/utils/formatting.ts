@@ -83,18 +83,3 @@ export function formatPriceComparison(buyPrice: number, sellPrice: number, buyDe
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-// Example usage of executeFlashLoanArbitrage
-const flashResult = await executeFlashLoanArbitrage(
-  opp.tokenInSymbol,
-  opp.tokenOutSymbol,
-  opp.amountInFormatted,
-  opp.buyDex,
-  opp.sellDex
-);
-
-// Example usage of executeDirectArbitrage
-const directResult = await executeDirectArbitrage(
-  opp.tokenInSymbol,
-  opp.amountInFormatted
-);
