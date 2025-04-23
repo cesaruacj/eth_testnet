@@ -22,7 +22,7 @@ async function main() {
   console.log("Iniciando descubrimiento de los 10 pares con mayor liquidez en cada DEX...");
   
   // Crear proveedor directo a Ethereum Sepolia
-  const provider = new ethers.providers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/" + process.env.ALCHEMY_API_KEY);
+  const provider = new ethers.providers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/JDR4rpYy7x_w4r0Z0P5QV9W-f_H7DqZ7");
   console.log(`Conectado directamente a Ethereum Sepolia en modo de solo lectura`);
   
   // Verificar conexión obteniendo el número de bloque

@@ -103,7 +103,7 @@ async function getTokenPrice(dexName: string, router: any, pair: any, deployer: 
 async function main() {
   console.log("=== Ejecutando prueba de soluciones ===");
   
-  const provider = new ethers.providers.JsonRpcProvider("https://base-mainnet.g.alchemy.com/v2/WtCCG_ntdXg_-l_oeA8VzgPxfvBbJC7F");
+  const provider = new ethers.providers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/JDR4rpYy7x_w4r0Z0P5QV9W-f_H7DqZ7");
   const [deployer] = await ethers.getSigners();
   
   // Test de estimateProfit

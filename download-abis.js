@@ -21,7 +21,7 @@ const ETHERSCAN_API = network === "sepolia" ? 'https://api-sepolia.etherscan.io/
 // Detalles de los DEXes y sus contratos
 const DEX_CONTRACTS = {
   SushiSwapV2: {
-    Router: '0xeaBcE3E74EF41FB40024a21Cc2ee2F5dDc615791',
+    Router: '0xeabce3e74ef41fb40024a21cc2ee2f5ddc615791',
     Factory: '0xc35DADB65012eC5796536bD9864eD8773aBc74C4'
   },
   UniswapV3: {

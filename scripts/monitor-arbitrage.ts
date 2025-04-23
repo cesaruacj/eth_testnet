@@ -5,7 +5,7 @@ import * as path from "path";
 import { TOKENS, DEX_ROUTERS, FACTORIES, POOLS, DEPLOYED_CONTRACTS, FEE_TIERS, AAVE_TOKENS } from "./sepoliaAddresses";
 dotenv.config();
 
-// Add these lines near the top of your file
+// Variables globales
 const USDC = TOKENS.USDC;
 const WETH = TOKENS.WETH;
 const DAI = TOKENS.DAI;

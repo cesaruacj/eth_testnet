@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers } from "ethers";
 import * as dotenv from "dotenv";
 import { DEPLOYED_CONTRACTS, AAVE_TOKENS } from "./sepoliaAddresses";
 import { getOptimizedGasFees } from "../src/utils/gas";
