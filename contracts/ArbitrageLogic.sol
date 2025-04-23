@@ -39,6 +39,10 @@ contract ArbitrageLogic is ReentrancyGuard {
         uint256 finalBalance,
         uint256 profit
     );
+    event SwapInitiated(address tokenIn, uint256 amount, address dex);
+    event SwapCompleted(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut);
+    event PremiumCalculated(uint256 loanAmount, uint256 premium, uint256 totalRequired);
+    event FundsTransferred(address token, address from, address to, uint256 amount);
     
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");

@@ -735,7 +735,7 @@ async function executeArbitrage(tokenInSymbol, tokenOutSymbol, amountInFormatted
     // Determinar decimales del token
     const tokenContract = new ethers.Contract(
       tokenInAddress,
-      ["function decimals() view returns (uint8)", "function allowance(address owner, address spender) view returns (uint256)", "function approve(address spender, uint256 amount) returns (bool)"],
+      ["function decimals() view returns (uint8)", "function balanceOf(address owner) view returns (uint256)", "function allowance(address owner, address spender) view returns (uint256)", "function approve(address spender, uint256 amount) returns (bool)"],
       wallet
     );
     const decimals = await tokenContract.decimals();
@@ -773,12 +773,44 @@ async function executeArbitrage(tokenInSymbol, tokenOutSymbol, amountInFormatted
     console.log(`📊 View details at: https://sepolia.etherscan.io/tx/${tx.hash}`);
 
     // Wait for confirmation
+    console.log(`⏳ Esperando confirmación para tx ${tx.hash}...`);
     const receipt = await tx.wait();
-    console.log(`Transaction confirmed in block ${receipt.blockNumber}`);
+    console.log(`📊 Estado de transacción: ${receipt.status === 1 ? "Éxito" : "Fallida"}`); 
+    console.log(`💲 Gas pagado: ${ethers.utils.formatEther(receipt.gasUsed.mul(receipt.effectiveGasPrice))} ETH`);
+
+    // Verificar eventos dentro del receipt
+    if (receipt.logs.length > 0) {
+      console.log(`📝 Eventos emitidos: ${receipt.logs.length}`);
+      // Intentar decodificar eventos relevantes
+    } else {
+      console.log(`⚠️ No se emitieron eventos - indica fallo silencioso`);
+    }
+
+    // Añadir verificación de errores más específica
+    const statusCode = await provider.call(
+      tx,
+      receipt.blockNumber
+    ).catch(e => {
+      const errorMessage = e.data || e.message;
+      console.log(`🔍 Error específico: ${errorMessage}`);
+      return null;
+    });
+
+    console.log(`🔎 Verificando saldo inicial de LINK en FlashLoan:`, 
+      ethers.utils.formatUnits(await tokenContract.balanceOf(FLASH_LOAN_CONTRACT_ADDRESS), decimals));
 
     return { success: true, txHash: tx.hash };
   } catch (error) {
-    console.error(`Error ejecutando flash loan: ${error}`);
+    console.error(`🚨 Error detallado:`, error);
+    
+    // Verificar saldo después del intento
+    console.log(`🔎 Saldo final de LINK en FlashLoan:`, 
+      ethers.utils.formatUnits(await tokenContract.balanceOf(FLASH_LOAN_CONTRACT_ADDRESS), decimals));
+    
+    // Verificar precio actual en DEXs para confirmar si la oportunidad sigue existiendo
+    console.log(`📊 Verificando precios actuales para confirmar si la oportunidad persiste...`);
+    const currentPrices = await getPrices(); // Verificar precios actualizados
+
     return { success: false, error };
   }
 }
@@ -1035,7 +1067,7 @@ async function getOptimizedGasFees(speed = 'standard', operationType = 'default'
     let maxPriorityFeePerGas = feeData.maxPriorityFeePerGas
       .mul(Math.floor(multiplier * priorityMultiplier * 100)).div(100);
 
-    // Añadir esta validación
+    // validación
     if (maxPriorityFeePerGas.gt(maxFeePerGas)) {
       maxPriorityFeePerGas = maxFeePerGas;
     }
