@@ -11,10 +11,10 @@
       "symbol": "WETH"
     },
     "liquidity": "95496398419980264228",
-    "sqrtPriceX96": "8840597773702605377701132594129",
-    "tick": 94300,
+    "sqrtPriceX96": "8823916247700513271929759630014",
+    "tick": 94262,
     "fee": 3000,
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV3_YU_YBTC": {
     "address": "0xc0b6f0c5d4c33c59b4672000d490992b7097ba40",
@@ -27,11 +27,11 @@
       "address": "0xe0232D625Ea3B94698F0a7DfF702931B704083c9",
       "symbol": "YU"
     },
-    "liquidity": "313753591963190147170243",
-    "sqrtPriceX96": "23126359282567057942486850917956",
-    "tick": 113533,
+    "liquidity": "313633772071647821175818",
+    "sqrtPriceX96": "22960564869247749229503427084029",
+    "tick": 113389,
     "fee": 3000,
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV3_USDC_WETH": {
     "address": "0x3289680dd4d6c10bb19b899729cda5eef58aeff1",
@@ -44,11 +44,11 @@
       "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
       "symbol": "WETH"
     },
-    "liquidity": "12811638555981175",
-    "sqrtPriceX96": "895407984171940365390414337372008",
-    "tick": 186663,
+    "liquidity": "12811695053898965",
+    "sqrtPriceX96": "890876130717939628666871052154760",
+    "tick": 186561,
     "fee": 500,
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV3_MON_WETH": {
     "address": "0xfac1138c5a426d26a6e350868eee6501788f1417",
@@ -62,10 +62,10 @@
       "symbol": "WETH"
     },
     "liquidity": "4509810151048218571662",
-    "sqrtPriceX96": "34360990712049542195990232989",
-    "tick": -16710,
+    "sqrtPriceX96": "34307292793057621719739468361",
+    "tick": -16741,
     "fee": 10000,
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV3_UNI_WETH": {
     "address": "0x287b0e934ed0439e2a7b1d5f0fc25ea2c24b64f7",
@@ -79,10 +79,10 @@
       "symbol": "WETH"
     },
     "liquidity": "194900593900397359858",
-    "sqrtPriceX96": "451549143752784133098474921025",
-    "tick": 34808,
+    "sqrtPriceX96": "451565152548958710274855528606",
+    "tick": 34809,
     "fee": 3000,
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV3_USDT_WETH": {
     "address": "0x58d850667c47981a1b6e7ca0b8dc2eb937cd4119",
@@ -99,7 +99,7 @@
     "sqrtPriceX96": "18465059049883798667759794553419",
     "tick": 109031,
     "fee": 10000,
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV3_USDC_UNI": {
     "address": "0x294a263412d5be965b45bd93121ca58813f68b07",
@@ -113,10 +113,10 @@
       "symbol": "UNI"
     },
     "liquidity": "36956531233810",
-    "sqrtPriceX96": "159060000565595918452978533725813",
-    "tick": 152101,
+    "sqrtPriceX96": "157052355974089756496512389288594",
+    "tick": 151847,
     "fee": 100,
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV3_LINK_WETH": {
     "address": "0xa470a353577901aa8cdcb828bb616ef41d58b88a",
@@ -133,7 +133,7 @@
     "sqrtPriceX96": "928805503028272391306144108",
     "tick": -88929,
     "fee": 10000,
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV3_QRT_WETH": {
     "address": "0xf474cca17c97b7662724293edd19cfe4cdd32fab",
@@ -147,10 +147,10 @@
       "symbol": "WETH"
     },
     "liquidity": "26820954063262",
-    "sqrtPriceX96": "3548920125550882912320996239492348",
-    "tick": 214207,
+    "sqrtPriceX96": "3615424299689929301446868786239644",
+    "tick": 214578,
     "fee": 3000,
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV3_YU_WETH": {
     "address": "0xfb01246458819bac2014eff039772ae6c4095817",
@@ -164,10 +164,10 @@
       "symbol": "WETH"
     },
     "liquidity": "282370325269458450677",
-    "sqrtPriceX96": "251792448797655226167404013",
-    "tick": -115036,
+    "sqrtPriceX96": "323473564652420506484667794",
+    "tick": -110025,
     "fee": 10000,
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV2_DAI_WETH": {
     "address": "0x2fb2d3eb1f38621b6b04ab10d82481acd6386d6f",
@@ -182,7 +182,7 @@
       "symbol": "WETH",
       "reserve": "418502913001469112680"
     },
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV2_COW_WETH": {
     "address": "0x7f12d41b598025f1ed99bc7c0d1255a319342855",
@@ -197,7 +197,7 @@
       "symbol": "WETH",
       "reserve": "117881916943108954717"
     },
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV2_USDC_WETH": {
     "address": "0x92b8274aba7ab667bee7eb776ec1de32438d90bf",
@@ -212,7 +212,7 @@
       "symbol": "WETH",
       "reserve": "364989446396629488874"
     },
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "UNIV2_USDT_WETH": {
     "address": "0x2bff913fc4c78969bbe0ecd368e893ff23c2ed3c",
@@ -227,7 +227,7 @@
       "symbol": "WETH",
       "reserve": "109308377864287350"
     },
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   },
   "AAVE_V3": {
     "poolAddress": "0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951",
@@ -236,39 +236,39 @@
     "reserves": {
       "DAI_AAVE": {
         "address": "0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357",
-        "liquidityIndex": "1599592714355560613001773058",
-        "currentLiquidityRate": "5616479344573424560892466",
-        "variableBorrowRate": "17321904200704029181279223",
-        "stableBorrowRate": "52165238025088003647659903",
+        "liquidityIndex": "1599595215989940017083068527",
+        "currentLiquidityRate": "5613323444162237943330070",
+        "variableBorrowRate": "17316912443783811094080603",
+        "stableBorrowRate": "52164614055472976386760075",
         "aTokenAddress": "0x29598b72eb5CeBd806C5dCD549490FdA35B13cD8",
-        "lastUpdateTimestamp": "1745439348"
+        "lastUpdateTimestamp": "1745448132"
       },
       "LINK_AAVE": {
         "address": "0xf8Fb3713D459D7C1018BD0A49D19b4C44290EBE5",
-        "liquidityIndex": "2607251452601961530202914287",
-        "currentLiquidityRate": "2429987250124526166293376156",
-        "variableBorrowRate": "3049143208875368249725377241",
-        "stableBorrowRate": "3139143208875368249725377241",
+        "liquidityIndex": "2609081312622764025539017037",
+        "currentLiquidityRate": "2428628602370315164524939066",
+        "variableBorrowRate": "3048051038195653857682336048",
+        "stableBorrowRate": "3138051038195653857682336048",
         "aTokenAddress": "0x3FfAf50D4F4E96eB78f2407c090b72e86eCaed24",
-        "lastUpdateTimestamp": "1745438796"
+        "lastUpdateTimestamp": "1745447904"
       },
       "USDC_AAVE": {
         "address": "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
-        "liquidityIndex": "1343774906235449699811723384",
-        "currentLiquidityRate": "20136166210098937285490481",
-        "variableBorrowRate": "31456794240080272430068714",
-        "stableBorrowRate": "53932099280010034053758589",
+        "liquidityIndex": "1343782258418381519970163075",
+        "currentLiquidityRate": "20070265007372226218703032",
+        "variableBorrowRate": "31405114824627901763527862",
+        "stableBorrowRate": "53925639353078487720440983",
         "aTokenAddress": "0x16dA4541aD1807f4443d92D26044C1147406EB80",
-        "lastUpdateTimestamp": "1745439468"
+        "lastUpdateTimestamp": "1745448060"
       },
       "WBTC_AAVE": {
         "address": "0x29f2D40B0605204364af54EC677bD022dA425d03",
-        "liquidityIndex": "1000156553243752182811851166",
-        "currentLiquidityRate": "776913260996569777794",
-        "variableBorrowRate": "388672699602119828359469",
-        "stableBorrowRate": "90388672699602119828359469",
+        "liquidityIndex": "1000156553456638755060263907",
+        "currentLiquidityRate": "776914693498277386485",
+        "variableBorrowRate": "388673057926579702293880",
+        "stableBorrowRate": "90388673057926579702293880",
         "aTokenAddress": "0x1804Bf30507dc2EB3bDEbbbdd859991EAeF6EefF",
-        "lastUpdateTimestamp": "1745439276"
+        "lastUpdateTimestamp": "1745447916"
       },
       "WETH_AAVE": {
         "address": "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c",
@@ -277,16 +277,16 @@
         "variableBorrowRate": "0",
         "stableBorrowRate": "90000000000000000000000000",
         "aTokenAddress": "0x5b071b590a59395fE4025A0Ccc1FcC931AAc1830",
-        "lastUpdateTimestamp": "1745439528"
+        "lastUpdateTimestamp": "1745448168"
       },
       "USDT": {
         "address": "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0",
-        "liquidityIndex": "1663877025784033342081456965",
-        "currentLiquidityRate": "184331994904650800919156459",
-        "variableBorrowRate": "220206058375891394202590368",
-        "stableBorrowRate": "235206058375891394202590368",
+        "liquidityIndex": "1663959598567702014909632833",
+        "currentLiquidityRate": "184024727155706177371682675",
+        "variableBorrowRate": "219852727835333803168753918",
+        "stableBorrowRate": "234852727835333803168753918",
         "aTokenAddress": "0xAF0F6e8b0Dc5c913bbF4d14c22B4E78Dd14310B6",
-        "lastUpdateTimestamp": "1745439420"
+        "lastUpdateTimestamp": "1745447916"
       },
       "AAVE_AAVE": {
         "address": "0x88541670E55cC00bEEFD87eB59EDd1b7C511AC9a",
@@ -313,9 +313,9 @@
         "variableBorrowRate": "20000000000000000000000000",
         "stableBorrowRate": "0",
         "aTokenAddress": "0xd190eF37dB51Bb955A680fF1A85763CC72d083D4",
-        "lastUpdateTimestamp": "1745394348"
+        "lastUpdateTimestamp": "1745445096"
       }
     },
-    "timestamp": 1745439509
+    "timestamp": 1745448167
   }
 }

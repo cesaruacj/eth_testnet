@@ -40,7 +40,7 @@ const TOKENS_WITH_AAVE_LIQUIDITY = ["DAI", "USDC", "WETH"]; // Based on testing
 // ================================
 const MIN_PROFIT_PERCENT = 0.1;  // Execute any trade with >0.1% profit
 const MAX_SLIPPAGE_PERCENT = 3;      // Lower to prevent massive slippage
-let IS_EXECUTION_ENABLED = true;     // Set to false to monitor only or true to execute arbitrage
+const IS_EXECUTION_ENABLED = false;     // Set to false to monitor only or true to execute arbitrage
 
 // ================================
 // Configuración de contratos desplegados
@@ -570,9 +570,13 @@ async function getOptimalFlashLoanAmount(tokenAddress, requestedAmount, decimals
     // Verificar liquidez desde el snapshot
     const liquidityCheck = checkAaveLiquidityFromSnapshot(tokenAddress, requestedAmount);
     
+    const finalAmount = liquidityCheck.available ? 
+      ethers.BigNumber.min(requestedAmount, liquidityCheck.safeLoanAmount) : 
+      ethers.utils.parseUnits("0.1", liquidityCheck.decimals);
+    
     if (liquidityCheck.hasLiquidity) {
       return {
-        amount: requestedAmount,
+        amount: finalAmount,
         adjusted: false
       };
     }
@@ -605,6 +609,12 @@ async function getOptimalFlashLoanAmount(tokenAddress, requestedAmount, decimals
 // ================================
 async function getAaveAvailableLiquidity(tokenAddress) {
   try {
+    // Verificación básica de la dirección
+    if (!tokenAddress || tokenAddress === '0x' || tokenAddress === '0x0000000000000000000000000000000000000000') {
+      console.log(`❌ Dirección de token inválida o indefinida: ${tokenAddress}`);
+      return { available: false, /* resto de valores por defecto */ };
+    }
+    
     console.log(`📊 Consultando liquidez disponible en Aave para ${tokenAddress}...`);
     
     // Obtener la Pool de Aave desde el Provider
@@ -675,163 +685,117 @@ async function getOptimizedGasFees(speed = 'fast', operationType = 'default') {
     // Ajustar multiplicador basado en la velocidad
     let multiplier;
     switch (speed) {
-      case 'economic':   // Nuevo modo económico
-        multiplier = 1.05;
-        break;
-      case 'standard':   // Renombrado de 'default' a 'standard'
-        multiplier = 1.1;
-        break;
-      case 'fast':
-        multiplier = 1.2;
-        break;
-      case 'fastest':
-        multiplier = 1.35; // Reducido de 1.5 a 1.35 para mejor balance
-        break;
-      default:
-        multiplier = 1.1;
+      case 'economic': multiplier = 1.05; break;
+      case 'standard': multiplier = 1.1; break;
+      case 'fast': multiplier = 1.2; break;
+      case 'fastest': multiplier = 1.35; break;
+      default: multiplier = 1.1;
     }
     
-    // Ajustar priority fee basado en operación 
+    // Ajustar priority fee
     let priorityMultiplier;
     switch (operationType) {
-      case 'flashloan':
-        priorityMultiplier = 1.1;  // Prioridad ligeramente superior
-        break;
-      case 'arbitrage':
-        priorityMultiplier = 1.2;  // Alta prioridad para arbitraje
-        break;
-      default:
-        priorityMultiplier = 1.0;
+      case 'flashloan': priorityMultiplier = 1.1; break;
+      case 'arbitrage': priorityMultiplier = 1.2; break;
+      default: priorityMultiplier = 1.0;
     }
     
-    // Gas limit optimizado por tipo de operación
+    // Gas limit por operación
     let gasLimit;
     switch (operationType) {
-      case 'approval':
-        gasLimit = 100000;  // Las aprobaciones necesitan menos gas
-        break;
-      case 'direct_swap':
-        gasLimit = 300000;  // Swaps directos
-        break;
-      case 'flashloan':
-        gasLimit = 1000000; // Flash loans necesitan más gas pero no tanto como antes
-        break;
-      case 'arbitrage':
-        gasLimit = 1500000; // Las operaciones de arbitraje completas necesitan bastante gas
-        break;
-      default:
-        gasLimit = 500000;  // Reducido del valor fijo anterior de 4,000,000
+      case 'approval': gasLimit = 100000; break;
+      case 'direct_swap': gasLimit = 300000; break;
+      case 'flashloan': gasLimit = 500000; break;
+      case 'arbitrage': gasLimit = 700000; break;
+      default: gasLimit = 250000;
     }
-    
-    // Calcular gas fees optimizados
+
+    // Calcular gas fees
     const maxFeePerGas = feeData.maxFeePerGas.mul(Math.floor(multiplier * 100)).div(100);
     let maxPriorityFeePerGas = feeData.maxPriorityFeePerGas
       .mul(Math.floor(multiplier * priorityMultiplier * 100)).div(100);
-    
-    // Añadir esta validación para que maxPriorityFeePerGas nunca exceda maxFeePerGas
+      
+    // IMPORTANTE: Esto corrige el error de maxPriorityFee > maxFee
     if (maxPriorityFeePerGas.gt(maxFeePerGas)) {
       maxPriorityFeePerGas = maxFeePerGas;
     }
     
-    return {
-      maxFeePerGas,
-      maxPriorityFeePerGas,
-      gasLimit
-    };
-  } catch (error) {
-    console.warn("Error getting optimized gas fees:", error.message);
-    // Valores de fallback más eficientes por tipo
-    const fallbackGasLimits = {
-      'approval': 100000,
-      'direct_swap': 300000,
-      'flashloan': 1000000,
-      'arbitrage': 1500000,
-      'default': 500000
-    };
+    console.log(`🛢️ Gas: maxFeePerGas=${ethers.utils.formatUnits(maxFeePerGas, 'gwei')} gwei, maxPriorityFeePerGas=${ethers.utils.formatUnits(maxPriorityFeePerGas, 'gwei')} gwei`);
     
-    return {
-      gasPrice: ethers.utils.parseUnits("3", "gwei"), // Reducido de 5 gwei
-      gasLimit: fallbackGasLimits[operationType] || 500000
+    return { maxFeePerGas, maxPriorityFeePerGas, gasLimit };
+  } catch (error) {
+    console.error(`Error obteniendo gas fees optimizados: ${error.message}`);
+    // Valores por defecto en caso de error
+    return { 
+      maxFeePerGas: ethers.utils.parseUnits('20', 'gwei'),
+      maxPriorityFeePerGas: ethers.utils.parseUnits('1.5', 'gwei'),
+      gasLimit: 300000
     };
   }
 }
 
-// ================================
-// Función para ejecutar arbitraje utilizando flash loans
-// ================================
-async function executeArbitrage(tokenInSymbol, tokenOutSymbol, amountInFormatted, buyDexName, sellDexName) {
-  try {
-    console.log(`\n🚀 EJECUTANDO ARBITRAJE CON FLASH LOAN: ${tokenInSymbol} → ${tokenOutSymbol} → ${tokenInSymbol}`);
-    
-    // Implementación que añadimos anteriormente para getAaveAvailableLiquidity
-    const tokenAddress = TOKENS[tokenInSymbol] || TOKENS_V3[tokenInSymbol];
-    const liquidityInfo = await getAaveAvailableLiquidity(tokenAddress);
-    
-    // ... resto de tu lógica ...
-    
-    return { success: true };
-  } catch (error) {
-    console.error(`Error en executeArbitrage: ${error.message}`);
-    return { success: false, error: error.message };
+// Add this function to map regular tokens to their Aave versions
+function getAaveTokenAddress(tokenSymbol) {
+  // First check if token exists in AAVE_TOKENS
+  if (AAVE_TOKENS[tokenSymbol]) {
+    return AAVE_TOKENS[tokenSymbol];
   }
+  
+  // Provide manual mappings for special cases
+  const tokenMapping = {
+    "LINK": AAVE_TOKENS.LINK,  // Use Aave LINK token
+    "WETH": AAVE_TOKENS.WETH,  // Use Aave WETH token
+    "USDC": AAVE_TOKENS.USDC,  // Use Aave USDC token
+    "DAI": AAVE_TOKENS.DAI     // Use Aave DAI token
+  };
+  
+  return tokenMapping[tokenSymbol];
 }
 
-// ================================
-// Simple triangular arbitrage function - placeholder for now
-// ================================
-async function findTriangularArbitrageOpportunities(priceResults) {
-  console.log("Encontradas 0 posibles rutas triangulares");
-  return; // Placeholder implementation
+// Añade esta función al final del archivo
+async function validateMonitoring() {
+  console.log("🚀 Iniciando validación del monitoreo de arbitraje en Sepolia");
+  
+  // Añade esta línea temporal al principio de validateMonitoring() para diagnóstico
+  console.log("Tokens disponibles en Aave:", Object.keys(AAVE_TOKENS).filter(k => 
+    k !== 'POOL' && k !== 'POOL_ADDRESSES_PROVIDER' && AAVE_TOKENS[k]));
+
+  // 1. Cargar fee tiers desde el snapshot
+  discoveredFeeTiers = getV3PoolFeeTiersFromSnapshot();
+  
+  // 2. Consultar precios
+  const priceResults = await getPrices();
+  
+  // 3. Analizar oportunidades de arbitraje
+  console.log("\n=================== ANÁLISIS DE ARBITRAJE DIRECTO ===================");
+  
+  // Analizar pares
+  await analyzeArbitragePair(priceResults.usdc_weth, "USDC", "WETH", "500");
+  await analyzeArbitragePair(priceResults.YBTC_weth, "YBTC", "WETH", "0.025");
+  await analyzeArbitragePair(priceResults.meth_weth, "METH", "WETH", "0.5");
+  await analyzeArbitragePair(priceResults.uni_weth, "UNI", "WETH", "5");
+  await analyzeArbitragePair(priceResults.link_weth, "LINK", "WETH", "0.5"); // Reducido a 0.5 por seguridad
+  await analyzeArbitragePair(priceResults.dai_weth, "DAI", "WETH", "500");
+  
+  console.log("\n✅ Validación de monitoreo completada");
 }
 
-// ================================
-// Función principal de monitoreo
-// ================================
-async function monitor() {
-  try {
-    // 1. Cargar fee tiers desde el snapshot
-    discoveredFeeTiers = getV3PoolFeeTiersFromSnapshot();
-    
-    // 2. Query prices across DEXes
-    const priceResults = await getPrices();
-    
-    // 3. Analyze for arbitrage opportunities
-    console.log("\n=================== ANÁLISIS DE ARBITRAJE DIRECTO ===================");
-    
-    // Check each token pair
-    await analyzeArbitragePair(priceResults.usdc_weth, "USDC", "WETH", "500");
-    await analyzeArbitragePair(priceResults.YBTC_weth, "YBTC", "WETH", "0.025");
-    await analyzeArbitragePair(priceResults.meth_weth, "METH", "WETH", "0.5");
-    await analyzeArbitragePair(priceResults.uni_weth, "UNI", "WETH", "5");
-    await analyzeArbitragePair(priceResults.link_weth, "LINK", "WETH", "0.5"); // Cambiado de 5 a 0.5 para LINK
-    await analyzeArbitragePair(priceResults.dai_weth, "DAI", "WETH", "500");
-    
-    // 4. Look for triangular opportunities 
-    console.log("\n=================== ANÁLISIS DE ARBITRAJE TRIANGULAR ===================");
-    await findTriangularArbitrageOpportunities(priceResults);
-  } catch (error) {
-    console.error("Error en monitor:", error);
-  }
-}
-
-// ================================
-// Función para analizar oportunidades de arbitraje en un par
-// ================================
+// Función para analizar arbitraje
 async function analyzeArbitragePair(results, tokenInSymbol, tokenOutSymbol, amountInFormatted) {
   console.log(`\n📊 ANÁLISIS PAR ${tokenInSymbol}/${tokenOutSymbol}:`);
   
-  // Filter valid prices (not NaN)
+  // Filtrar precios válidos
   const validPrices = {};
-  Object.entries(results).forEach(([dex, price]) => {
+  Object.entries(results || {}).forEach(([dex, price]) => {
     if (!isNaN(price)) validPrices[dex] = price;
   });
   
   if (Object.keys(validPrices).length < 2) {
-    console.log(`No hay suficientes DEXes con liquidez para comparar precios`);
+    console.log(`No hay suficientes DEXes con liquidez para comparar`);
     return;
   }
   
-  // Find best and worst prices
+  // Encontrar mejores y peores precios
   let maxPrice = -Infinity, minPrice = Infinity;
   let buyDex = '', sellDex = '';
   
@@ -845,149 +809,30 @@ async function analyzeArbitragePair(results, tokenInSymbol, tokenOutSymbol, amou
   if (diffPercent > 0) {
     console.log(`${diffPercent.toFixed(2)}% oportunidad: Comprar en ${buyDex} y vender en ${sellDex}`);
     
-    // Si el spread es mayor que el mínimo y la ejecución está habilitada
     if (diffPercent > MIN_PROFIT_PERCENT) {
-      // Calculate optimal amount based on pool liquidity
-      console.log(`🔍 Calculando monto óptimo para ${tokenInSymbol} basado en liquidez...`);
+      console.log(`🔥 Rentable: ${diffPercent.toFixed(2)}% > ${MIN_PROFIT_PERCENT}%`);
       
-      // Try to get the optimal amount based on current liquidity
-      const optimalAmount = calculateOptimalAmount(tokenInSymbol);
-      const amountToUse = optimalAmount || amountInFormatted;
+      // Get the correct Aave token address using our mapping function
+      const aaveTokenAddress = getAaveTokenAddress(tokenInSymbol);
       
-      if (optimalAmount) {
-        console.log(`✅ Usando monto óptimo de ${optimalAmount} ${tokenInSymbol}`);
-      } else {
-        console.log(`No se pudo determinar liquidez para ${tokenInSymbol}, usando valor por defecto`);
-      }
-      
-      if (IS_EXECUTION_ENABLED) {
-        await executeArbitrage(tokenInSymbol, tokenOutSymbol, amountToUse, buyDex, sellDex);
-      } else {
-        console.log(`⚠️ Ejecución deshabilitada, solo monitoreando (IS_EXECUTION_ENABLED = false)`);
-      }
-    } else {
-      console.log(`Diferencia insuficiente para arbitraje rentable (mínimo: ${MIN_PROFIT_PERCENT}%)`);
-    }
-  } else {
-    console.log(`Sin oportunidad de arbitraje identificada para ${tokenInSymbol}/${tokenOutSymbol}`);
-  }
-}
-
-// Function to calculate optimal amount based on liquidity
-function calculateOptimalAmount(tokenSymbol) {
-  try {
-    // Get relevant pools for this token
-    const relevantPools = getRelevantPoolsForToken(tokenSymbol);
-    
-    if (relevantPools.length === 0) {
-      console.log(`No se encontraron pools para ${tokenSymbol}`);
-      return null;
-    }
-    
-    let minLiquidityPerc = 0.025; // Use at most 2.5% of pool liquidity
-    let optimalAmount = null;
-    
-    // Check pools and find a safe amount
-    for (const poolAddress of relevantPools) {
-      const poolInfo = liquidityData[getPoolKeyByAddress(poolAddress)];
-      
-      if (!poolInfo) continue;
-      
-      let tokenInfo = null;
-      let tokenDecimals = 18;
-      
-      // Find which side of the pool is our token
-      if (poolInfo.token0.symbol === tokenSymbol) {
-        tokenInfo = poolInfo.token0;
-        tokenDecimals = getDecimals(tokenSymbol);
-      } else if (poolInfo.token1.symbol === tokenSymbol) {
-        tokenInfo = poolInfo.token1;
-        tokenDecimals = getDecimals(tokenSymbol);
-      }
-      
-      if (tokenInfo) {
-        const reserve = ethers.BigNumber.from(tokenInfo.reserve);
-        const safeAmount = reserve.mul(Math.floor(minLiquidityPerc * 100)).div(100);
-        const formattedSafe = ethers.utils.formatUnits(safeAmount, tokenDecimals);
+      if (aaveTokenAddress) {
+        const liquidityInfo = await getAaveAvailableLiquidity(aaveTokenAddress);
+        console.log(`📊 Flash loan: ${liquidityInfo.available ? '✅ Disponible' : '❌ No disponible'}`);
         
-        console.log(`Pool ${poolInfo.token0.symbol}/${poolInfo.token1.symbol}: ${ethers.utils.formatUnits(reserve, tokenDecimals)} ${tokenSymbol} disponible`);
-        console.log(`Monto seguro (${minLiquidityPerc * 100}%): ${formattedSafe} ${tokenSymbol}`);
-        
-        // Keep track of smallest safe amount across pools
-        if (!optimalAmount || parseFloat(formattedSafe) < parseFloat(optimalAmount)) {
-          optimalAmount = formattedSafe;
+        if (liquidityInfo.available) {
+          console.log(`💰 Liquidez disponible: ${liquidityInfo.formattedLiquidity}`);
+          console.log(`💡 Monto seguro: ${liquidityInfo.formattedSafeLoan}`);
         }
+      } else {
+        console.log(`⚠️ ${tokenInSymbol} no disponible en Aave para flash loans`);
       }
     }
-    
-    return optimalAmount;
-  } catch (error) {
-    console.error(`Error calculando monto óptimo: ${error.message}`);
-    return getDefaultAmountForToken(tokenSymbol);
-  }
-}
-
-// Function to get default amount for a token
-function getDefaultAmountForToken(tokenSymbol) {
-  const defaults = {
-    "USDC": "500",
-    "WETH": "0.5",
-    "DAI": "500",
-    "YBTC": "0.025",
-    "METH": "0.5",
-    "UNI": "5",
-    "LINK": "0.5", // Cambiado de 5 a 0.5 para LINK
-    "YU": "5",
-    "QRT": "5",
-    "USDT": "500",
-    "COW": "10"  // Completar el string truncado y añadir comilla de cierre
-  };
-  
-  return defaults[tokenSymbol] || "1"; // Valor por defecto si no se encuentra el token
-}
-
-// Function to get relevant pools for a token
-function getRelevantPoolsForToken(tokenSymbol) {
-  const poolAddresses = [];
-  
-  // Check each pool in liquidityData to see if it contains the token
-  for (const [poolKey, poolData] of Object.entries(liquidityData)) {
-    if (poolData?.token0?.symbol === tokenSymbol || poolData?.token1?.symbol === tokenSymbol) {
-      const poolAddress = POOLS[poolKey];
-      if (poolAddress) poolAddresses.push(poolAddress);
-    }
-  }
-  
-  return poolAddresses;
-}
-
-// Variable global para habilitar/deshabilitar ejecución
-const IS_EXECUTION_ENABLED = false; // Set to true to enable actual execution
-const MIN_PROFIT_PERCENT = 0.1; // Minimum profit percentage to consider arbitrage
-
-// Load the wallet if execution is enabled
-let wallet = null;
-if (IS_EXECUTION_ENABLED) {
-  if (!process.env.PRIVATE_KEY) {
-    console.log("⚠️ PRIVATE_KEY no encontrada en .env - modo solo monitoreo");
   } else {
-    wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-    console.log(`🔑 Wallet cargada: ${wallet.address}`);
+    console.log(`No hay oportunidad de arbitraje (${diffPercent.toFixed(2)}%)`);
   }
 }
 
-// Cargar datos de liquidez del archivo
-try {
-  const dataPath = path.join(__dirname, "../data/liquidity-snapshot.json");
-  liquidityData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-  console.log(`✅ Datos de liquidez cargados de ${dataPath}`);
-} catch (error) {
-  console.error(`❌ Error cargando snapshot de liquidez: ${error.message}`);
-  liquidityData = {};
-}
-
-// Iniciar monitoreo
-console.log("🚀 Iniciando monitoreo de arbitraje en Sepolia Testnet usando datos de liquidez precalculados...");
-monitor().catch(error => {
-  console.error("❌ Error en monitor:", error);
+// Ejecutar función principal
+validateMonitoring().catch(error => {
+  console.error("Error en la validación:", error);
 });
