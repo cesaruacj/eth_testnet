@@ -177,7 +177,7 @@ const amountInWETH = ethers.utils.parseUnits("0.5", 18);       // 0.5 WETH (18 d
 const amountInYBTC = ethers.utils.parseUnits("0.025", 8);     // 0.025 YBTC (8 decimales)
 const amountInMETH = ethers.utils.parseUnits("0.5", 18);       // 0.5 METH (18 decimales)
 const amountInUNI = ethers.utils.parseUnits("5", 18);       // 5 UNI (18 decimales)
-const amountInLINK = ethers.utils.parseUnits("5", 18);      // 5 LINK (18 decimales)
+const amountInLINK = ethers.utils.parseUnits("0.5", 18);      // 1 LINK (18 decimales)
 const amountInDAI = ethers.utils.parseUnits("500", 18);     // 500 DAI (18 decimales)
 
 // Definir fee tiers para Uniswap V3
@@ -774,7 +774,7 @@ async function monitor() {
     await analyzeArbitragePair(priceResults.YBTC_weth, "YBTC", "WETH", "0.025");
     await analyzeArbitragePair(priceResults.meth_weth, "METH", "WETH", "0.5");
     await analyzeArbitragePair(priceResults.uni_weth, "UNI", "WETH", "5");
-    await analyzeArbitragePair(priceResults.link_weth, "LINK", "WETH", "5");
+    await analyzeArbitragePair(priceResults.link_weth, "LINK", "WETH", "0.5");
     await analyzeArbitragePair(priceResults.dai_weth, "DAI", "WETH", "500");
     
     // 4. Look for triangular opportunities 

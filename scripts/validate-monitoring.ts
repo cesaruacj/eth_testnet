@@ -734,19 +734,39 @@ async function getOptimizedGasFees(speed = 'fast', operationType = 'default') {
   }
 }
 
-// Add this function to map regular tokens to their Aave versions
+// Improved function to get Aave token addresses from snapshot
 function getAaveTokenAddress(tokenSymbol) {
-  // First check if token exists in AAVE_TOKENS
+  // First check if data exists in snapshot
+  if (liquidityData && liquidityData.AAVE_V3 && liquidityData.AAVE_V3.reserves) {
+    // Find matching token in Aave reserves (with or without _AAVE suffix)
+    const exactMatch = liquidityData.AAVE_V3.reserves[tokenSymbol];
+    const suffixMatch = liquidityData.AAVE_V3.reserves[`${tokenSymbol}_AAVE`];
+    
+    if (exactMatch) {
+      console.log(`Found exact match for ${tokenSymbol} in Aave: ${exactMatch.address}`);
+      return exactMatch.address;
+    }
+    
+    if (suffixMatch) {
+      console.log(`Found suffixed match for ${tokenSymbol} in Aave: ${suffixMatch.address}`);
+      return suffixMatch.address;
+    }
+    
+    console.log(`No match found for ${tokenSymbol} in Aave reserves`);
+  }
+  
+  // Fallback to hardcoded values (less reliable)
   if (AAVE_TOKENS[tokenSymbol]) {
+    console.log(`Using hardcoded address for ${tokenSymbol}: ${AAVE_TOKENS[tokenSymbol]}`);
     return AAVE_TOKENS[tokenSymbol];
   }
   
-  // Provide manual mappings for special cases
+  // Final fallback with manual mappings
   const tokenMapping = {
-    "LINK": AAVE_TOKENS.LINK,  // Use Aave LINK token
-    "WETH": AAVE_TOKENS.WETH,  // Use Aave WETH token
-    "USDC": AAVE_TOKENS.USDC,  // Use Aave USDC token
-    "DAI": AAVE_TOKENS.DAI     // Use Aave DAI token
+    "LINK": AAVE_TOKENS.LINK,
+    "WETH": AAVE_TOKENS.WETH,
+    "USDC": AAVE_TOKENS.USDC,
+    "DAI": AAVE_TOKENS.DAI
   };
   
   return tokenMapping[tokenSymbol];

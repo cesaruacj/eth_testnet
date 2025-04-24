@@ -10,10 +10,17 @@ const FLASH_LOAN_CONTRACT_ADDRESS = DEPLOYED_CONTRACTS.FLASH_LOAN;
 const ARBITRAGE_LOGIC_ADDRESS = DEPLOYED_CONTRACTS.ARBITRAGE_LOGIC;
 const AAVE_POOL_ADDRESS_PROVIDER = AAVE_V3.POOL_ADDRESSES_PROVIDER;
 
-// Token a probar (usa tokens soportados por Aave en Sepolia)
-const TEST_TOKEN = AAVE_TOKENS.LINK; // También puedes probar con DAI, USDC, WETH
-const TEST_TOKEN_SYMBOL = "LINK";
-const TEST_AMOUNT = "1"; // Cantidad pequeña para pruebas iniciales
+// Token configuration with all available tokens
+const TOKEN_CONFIGS = [
+  { address: AAVE_TOKENS.DAI, symbol: "DAI", amount: "0.01" },
+  { address: AAVE_TOKENS.LINK, symbol: "LINK", amount: "0.01" },
+  { address: AAVE_TOKENS.WBTC, symbol: "WBTC", amount: "0.001" }, // Lower amount for WBTC
+  { address: AAVE_TOKENS.USDC, symbol: "USDC", amount: "0.01" },
+  { address: AAVE_TOKENS.USDT, symbol: "USDT", amount: "0.01" },
+  { address: AAVE_TOKENS.AAVE, symbol: "AAVE", amount: "0.01" }
+];
+
+const TEST_AMOUNT = "0.01"; // Cantidad pequeña para pruebas iniciales
 
 // ABI mínimos
 const flashLoanABI = [
@@ -53,19 +60,34 @@ async function validateFlashLoan() {
   // Paso 1: Verificar que los contratos existen
   await validateContractExistence();
   
-  // Paso 2: Verificar que el token está soportado por Aave
-  await validateTokenSupport();
-  
-  // Paso 3: Verificar saldos y aprobaciones
-  await validateBalancesAndAllowances();
-  
-  // Paso 4: Simular la función de flash loan (sin enviarlo a la blockchain)
-  await simulateFlashLoan();
-  
-  // Paso 5: Ejecutar un flash loan pequeño
-  if (await confirmExecution()) {
-    await preFundArbitrageLogic();
-    await executeTestFlashLoan();
+  // Test each token
+  for (const tokenConfig of TOKEN_CONFIGS) {
+    console.log(`\n==== TESTING FLASH LOAN WITH ${tokenConfig.symbol} ====\n`);
+    
+    const currentTestToken = tokenConfig.address;
+    const currentTestSymbol = tokenConfig.symbol;
+    const currentTestAmount = tokenConfig.amount;
+
+    try {
+      // Paso 2: Verificar que el token está soportado por Aave
+      await validateTokenSupport(currentTestToken, currentTestSymbol);
+      
+      // Paso 3: Verificar saldos y aprobaciones
+      await validateBalancesAndAllowances(currentTestToken, currentTestSymbol);
+      
+      // Paso 4: Simular la función de flash loan
+      const simulationSuccess = await simulateFlashLoan(currentTestToken, currentTestSymbol, currentTestAmount);
+      
+      // Paso 5: Ejecutar un flash loan pequeño
+      if (simulationSuccess && await confirmExecution(currentTestSymbol, currentTestAmount)) {
+        await preFundArbitrageLogic(currentTestToken, currentTestSymbol, currentTestAmount);
+        await executeTestFlashLoan(currentTestToken, currentTestSymbol, currentTestAmount);
+      }
+    } catch (error) {
+      console.error(`❌ Error testing flash loan with ${currentTestSymbol}:`, error);
+      console.log(`Continuing with next token...\n`);
+      continue;
+    }
   }
 }
 
@@ -103,8 +125,8 @@ async function validateContractExistence() {
 }
 
 // Valida que el token esté soportado por Aave
-async function validateTokenSupport() {
-  console.log(`PASO 2: Verificando soporte del token ${TEST_TOKEN_SYMBOL} en Aave...`);
+async function validateTokenSupport(testToken, testSymbol) {
+  console.log(`PASO 2: Verificando soporte del token ${testSymbol} en Aave...`);
   
   try {
     // Obtener la Pool de Aave desde el Provider
@@ -114,14 +136,14 @@ async function validateTokenSupport() {
     
     // Verificar que el token está soportado en la Pool
     const poolContract = new ethers.Contract(poolAddress, poolABI, provider);
-    const reserveData = await poolContract.getReserveData(TEST_TOKEN);
+    const reserveData = await poolContract.getReserveData(testToken);
     
     // Si no revierte, el token está soportado
-    const tokenContract = new ethers.Contract(TEST_TOKEN, erc20ABI, provider);
+    const tokenContract = new ethers.Contract(testToken, erc20ABI, provider);
     const symbol = await tokenContract.symbol();
     const decimals = await tokenContract.decimals();
     
-    console.log(`✓ Token ${symbol} (${TEST_TOKEN}) soportado por Aave`);
+    console.log(`✓ Token ${symbol} (${testToken}) soportado por Aave`);
     console.log(`✓ aToken address: ${reserveData.aTokenAddress}`);
     console.log(`✓ Decimals: ${decimals}`);
     console.log(`✓ Liquidez disponible: ${ethers.utils.formatUnits(reserveData.currentLiquidityRate, 27)}%`);
@@ -137,20 +159,20 @@ async function validateTokenSupport() {
 }
 
 // Valida saldos y aprobaciones
-async function validateBalancesAndAllowances() {
+async function validateBalancesAndAllowances(testToken, testSymbol) {
   console.log("PASO 3: Verificando saldos y aprobaciones...");
   
   try {
-    const tokenContract = new ethers.Contract(TEST_TOKEN, erc20ABI, provider);
+    const tokenContract = new ethers.Contract(testToken, erc20ABI, provider);
     const decimals = await tokenContract.decimals();
     
     // Verificar saldo de la wallet
     const walletBalance = await tokenContract.balanceOf(wallet.address);
-    console.log(`✓ Saldo de ${TEST_TOKEN_SYMBOL} en tu wallet: ${ethers.utils.formatUnits(walletBalance, decimals)}`);
+    console.log(`✓ Saldo de ${testSymbol} en tu wallet: ${ethers.utils.formatUnits(walletBalance, decimals)}`);
     
     // Verificar saldo del contrato FlashLoan
     const contractBalance = await tokenContract.balanceOf(FLASH_LOAN_CONTRACT_ADDRESS);
-    console.log(`✓ Saldo de ${TEST_TOKEN_SYMBOL} en FlashLoanSepolia: ${ethers.utils.formatUnits(contractBalance, decimals)}`);
+    console.log(`✓ Saldo de ${testSymbol} en FlashLoanSepolia: ${ethers.utils.formatUnits(contractBalance, decimals)}`);
     
     // Verificar aprobación de la wallet al contrato FlashLoan
     const allowanceToFlashLoan = await tokenContract.allowance(wallet.address, FLASH_LOAN_CONTRACT_ADDRESS);
@@ -168,19 +190,19 @@ async function validateBalancesAndAllowances() {
 }
 
 // Simula la ejecución del flash loan (sin enviar transacción)
-async function simulateFlashLoan() {
+async function simulateFlashLoan(testToken, testSymbol, testAmount) {
   console.log("PASO 4: Simulando ejecución de flash loan...");
   
   try {
-    const tokenContract = new ethers.Contract(TEST_TOKEN, erc20ABI, provider);
+    const tokenContract = new ethers.Contract(testToken, erc20ABI, provider);
     const decimals = await tokenContract.decimals();
-    const amount = ethers.utils.parseUnits(TEST_AMOUNT, decimals);
+    const amount = ethers.utils.parseUnits(testAmount, decimals);
     
     // Conectar al contrato FlashLoan con la wallet
     const flashLoanWithSigner = new ethers.Contract(FLASH_LOAN_CONTRACT_ADDRESS, flashLoanABI, wallet);
     
     // Estimar gas (esto simulará la llamada completa sin ejecutarla)
-    const gasEstimate = await flashLoanWithSigner.estimateGas.executeFlashLoan(TEST_TOKEN, amount);
+    const gasEstimate = await flashLoanWithSigner.estimateGas.executeFlashLoan(testToken, amount);
     
     console.log(`✓ Simulación exitosa! Estimación de gas: ${gasEstimate.toString()}`);
     console.log("✅ La transacción de flash loan debería ejecutarse correctamente\n");
@@ -193,9 +215,7 @@ async function simulateFlashLoan() {
     // Analizar el error para dar recomendaciones más específicas
     if ((error instanceof Error ? error.message : String(error)).includes("TRANSFER_AMOUNT_EXCEEDS_BALANCE")) {
       console.log("\n⚠️ El error parece indicar un problema de balance insuficiente.");
-      console.log("Posibles causas:");
-      console.log("1. La Pool de Aave no tiene suficiente liquidez del token.");
-      console.log("2. El contrato ArbitrageLogic no está retornando los tokens al FlashLoanSepolia.");
+      // Detailed error handling...
     } 
     else if ((error instanceof Error ? error.message : String(error)).includes("insufficient")) {
       console.log("\n⚠️ El error parece indicar un problema de fondos insuficientes para gas.");
@@ -217,78 +237,65 @@ async function simulateFlashLoan() {
 }
 
 // Confirma si el usuario quiere ejecutar un flash loan de prueba
-async function confirmExecution() {
+async function confirmExecution(testSymbol, testAmount) {
   // En un entorno de script, simplemente retornamos true
   // En un entorno interactivo, podrías implementar una confirmación real
-  console.log("PASO 5: ¿Ejecutar un flash loan de prueba?");
-  console.log(`Se ejecutará un flash loan de ${TEST_AMOUNT} ${TEST_TOKEN_SYMBOL}`);
+  console.log("PASO 5: Ejecutar un flash loan de prueba");
+  console.log(`Se ejecutará un flash loan de ${testAmount} ${testSymbol}`);
   console.log("NOTA: Esto enviará una transacción real a la blockchain\n");
   
   return true; // Cambiar a false si no quieres ejecutar automáticamente
 }
 
+// Añadir función para pre-fondear
+async function preFundArbitrageLogic(testToken, testSymbol, testAmount) {
+  const tokenContract = new ethers.Contract(testToken, erc20ABI, wallet);
+  const decimals = await tokenContract.decimals();
+  
+  // Calculate premium as 0.05% of the flash loan amount
+  const borrowAmount = ethers.utils.parseUnits(testAmount, decimals);
+  const premiumRate = 0.0005; // 0.05%
+  const premiumAmount = borrowAmount.mul(Math.floor(premiumRate * 10000)).div(10000);
+  
+  // Add a small buffer (10%) to ensure we have enough to cover the premium
+  const fundAmount = premiumAmount.mul(110).div(100);
+  
+  // Send the calculated premium amount to ArbitrageLogic
+  const tx = await tokenContract.transfer(ARBITRAGE_LOGIC_ADDRESS, fundAmount);
+  await tx.wait();
+  
+  console.log(`✅ Enviados ${ethers.utils.formatUnits(fundAmount, decimals)} ${testSymbol} a ArbitrageLogic para cubrir el premium (0.05% de ${testAmount} + 10% buffer)`);
+}
+
 // Ejecuta un flash loan pequeño como prueba
-async function executeTestFlashLoan() {
+async function executeTestFlashLoan(testToken, testSymbol, testAmount) {
   console.log("Ejecutando flash loan de prueba...");
   
   try {
-    const tokenContract = new ethers.Contract(TEST_TOKEN, erc20ABI, provider);
+    const tokenContract = new ethers.Contract(testToken, erc20ABI, provider);
     const decimals = await tokenContract.decimals();
-    const amount = ethers.utils.parseUnits(TEST_AMOUNT, decimals);
+    const amount = ethers.utils.parseUnits(testAmount, decimals);
     
     // Conectar al contrato FlashLoan con la wallet
     const flashLoanWithSigner = new ethers.Contract(FLASH_LOAN_CONTRACT_ADDRESS, flashLoanABI, wallet);
     
-    // Configurar opciones de transacción
-    const txOptions = {
-      gasLimit: 2000000,
-      maxFeePerGas: ethers.utils.parseUnits("1.5", "gwei"),
-      maxPriorityFeePerGas: ethers.utils.parseUnits("0.5", "gwei")
-    };
-
-    // Ejecutar la transacción
-    console.log("Enviando transacción...");
-    const tx = await flashLoanWithSigner.executeFlashLoan(TEST_TOKEN, amount, txOptions);
-    console.log(`✓ Transacción enviada: ${tx.hash}`);
-    console.log(`Ver en Etherscan: https://sepolia.etherscan.io/tx/${tx.hash}`);
+    // Ejecutar el flash loan
+    console.log(`Enviando transacción de flash loan para ${testAmount} ${testSymbol}...`);
+    const tx = await flashLoanWithSigner.executeFlashLoan(testToken, amount);
     
+    console.log(`Transacción enviada! Hash: ${tx.hash}`);
     console.log("Esperando confirmación...");
+    
+    // Esperar a que la transacción sea minada
     const receipt = await tx.wait();
     
-    if (receipt.status === 1) {
-      console.log("✅ Flash loan ejecutado exitosamente!");
-      console.log(`Gas usado: ${receipt.gasUsed.toString()}`);
-    } else {
-      console.error("❌ La transacción falló en la blockchain");
-    }
+    console.log(`✅ Flash loan ejecutado con éxito!`);
+    console.log(`Gas usado: ${receipt.gasUsed.toString()}`);
     
-    // Verificar balances después de la transacción
-    const finalBalance = await tokenContract.balanceOf(FLASH_LOAN_CONTRACT_ADDRESS);
-    console.log(`Saldo final de ${TEST_TOKEN_SYMBOL} en el contrato: ${ethers.utils.formatUnits(finalBalance, decimals)}`);
-    
-    return receipt.status === 1;
+    return true;
   } catch (error) {
     console.error("❌ Error ejecutando flash loan:");
-    console.error((error instanceof Error ? error.message : String(error)));
+    console.error(error instanceof Error ? error.message : String(error));
     return false;
   }
 }
-
-// Añadir función para pre-fondear
-async function preFundArbitrageLogic() {
-  const tokenContract = new ethers.Contract(TEST_TOKEN, erc20ABI, wallet);
-  const decimals = await tokenContract.decimals();
-  
-  // Enviar 0.001 LINK a ArbitrageLogic para cubrir el premium
-  const fundAmount = ethers.utils.parseUnits("0.001", decimals);
-  await tokenContract.transfer(ARBITRAGE_LOGIC_ADDRESS, fundAmount);
-  
-  console.log(`✅ Enviados 0.001 ${TEST_TOKEN_SYMBOL} a ArbitrageLogic para cubrir el premium`);
-}
-
-// Ejecutar la validación
-validateFlashLoan().then(() => {
-  console.log("\n🏁 Validación completada");
-}).catch(error => {
-  console.error("Error en la validación:", error);
-});
