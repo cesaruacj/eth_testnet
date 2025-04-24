@@ -29,10 +29,13 @@ contract ArbitrageLogic is ReentrancyGuard {
     address public owner;
     address public flashLoan;
     DexAggregator public dexAggregator;
-    
+
     // Mapping token => dirección del oráculo (Chainlink)
     mapping(address => address) public priceFeeds;
-    
+
+    // Add this state variable
+    bool public testMode = true;
+
     event ArbitrageExecuted(
         address indexed tokenIn,
         uint256 amountIn,
@@ -44,7 +47,7 @@ contract ArbitrageLogic is ReentrancyGuard {
     event PremiumCalculated(uint256 loanAmount, uint256 premium, uint256 totalRequired);
     event FundsTransferred(address token, address from, address to, uint256 amount);
     event ArbitrageQuoteData(uint256 bestAmountOut, uint256 requiredAmount, string status);
-    
+
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
         _;
@@ -55,20 +58,20 @@ contract ArbitrageLogic is ReentrancyGuard {
         require(msg.sender == owner || msg.sender == flashLoan, "Not owner");
         _;
     }
-    
+
     constructor(address _dexAggregator) {
         owner = msg.sender;
         dexAggregator = DexAggregator(_dexAggregator);
     }
-    
+
     function setOwner(address _newOwner) external onlyOwner {
         owner = _newOwner;
     }
-    
+
     function setDexAggregator(address _dexAggregator) external onlyOwner {
         dexAggregator = DexAggregator(_dexAggregator);
     }
-    
+
     function setPriceFeed(address _token, address _priceFeed) external onlyAuthorized {
         priceFeeds[_token] = _priceFeed;
     }
@@ -77,7 +80,12 @@ contract ArbitrageLogic is ReentrancyGuard {
     function setFlashLoanAddress(address _flashLoan) external onlyOwner {
         flashLoan = _flashLoan;
     }
-    
+
+    // Add this function
+    function setTestMode(bool _enabled) external onlyOwner {
+        testMode = _enabled;
+    }
+
     /**
      * @dev Ejecuta un arbitraje simple: tokenIn -> (swap en el DEX óptimo) -> tokenIn.
      *      Esta función consulta la mejor ruta en DexAggregator, ejecuta el swap y verifica rentabilidad.
@@ -97,7 +105,10 @@ contract ArbitrageLogic is ReentrancyGuard {
         );
 
         // 3. Verificar si la ganancia cubre el premium
-        require(bestAmountOut > requiredAmount, "No profitable arbitrage opportunity");
+        // Only check profitability if NOT in test mode
+        if (!testMode) {
+            require(bestAmountOut > requiredAmount, "No profitable arbitrage opportunity");
+        }
 
         // 4. Aprobar tokens al DexAggregator y ejecutar el swap
         IERC20(tokenIn).approve(address(dexAggregator), amountIn);
@@ -118,7 +129,7 @@ contract ArbitrageLogic is ReentrancyGuard {
 
         emit ArbitrageExecuted(tokenIn, amountIn, receivedAmount, profit);
     }
-    
+
     /**
      * @dev Ejecuta arbitraje multiruta utilizando DexAggregator.
      *      En una implementación real, se evaluarían distintas rutas.
@@ -136,7 +147,7 @@ contract ArbitrageLogic is ReentrancyGuard {
         uint256 finalBalance = IERC20(tokenA).balanceOf(address(this));
         profit = finalBalance > amountIn ? finalBalance - amountIn : 0;
     }
-    
+
     /**
      * @dev Ejecuta arbitraje directo desde una wallet externa (no flash loan)
      * Esta función permite que cualquier usuario ejecute arbitraje si encuentra oportunidad
@@ -182,7 +193,7 @@ contract ArbitrageLogic is ReentrancyGuard {
         
         return profit;
     }
-    
+
     /**
      * @dev Obtiene el precio en USD (8 decimales) de un token mediante Chainlink.
      */

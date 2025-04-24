@@ -90,6 +90,7 @@ async function main() {
       /export const DEPLOYED_CONTRACTS = \{[\s\S]*?\}/,
       `export const DEPLOYED_CONTRACTS = {
   // Automatically updated by deploy script
+  DEX_AGGREGATOR: "${dexAggregator.address}",
   ARBITRAGE_LOGIC: "${arbitrageLogic.address}",
   FLASH_LOAN: "${flashLoan.address}"
 }`

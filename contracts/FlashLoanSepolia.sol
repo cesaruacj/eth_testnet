@@ -55,7 +55,11 @@ contract FlashLoanSepolia is Ownable {
         
         uint256 amountOwing = amounts[0] + premiums[0];
         
-        // AÑADIR ESTA LÍNEA: Transferir los tokens directamente a ArbitrageLogic
+        // FIRST: Check if ArbitrageLogic has the premium amount
+        uint256 arbitrageBalance = IERC20(assets[0]).balanceOf(address(arbitrageLogic));
+        require(arbitrageBalance >= premiums[0], "ArbitrageLogic needs pre-funding for premium");
+        
+        //Transferir los tokens directamente a ArbitrageLogic
         IERC20(assets[0]).transfer(address(arbitrageLogic), amounts[0]);
         
         // Ejecutar arbitraje
